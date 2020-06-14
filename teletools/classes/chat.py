@@ -8,7 +8,7 @@ class CHAT_TYPE(Enum):
 
 
 class Chat:
-    def __init__(self, id, name, type=CHAT_TYPE.CHAT):
+    def __init__(self, id, name, chat_obj ,type=CHAT_TYPE.CHAT):
         self.id = id
         self.name = name
         self.type = type

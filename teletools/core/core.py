@@ -1,13 +1,14 @@
 import curses
+import  curses.textpad
 from time import sleep
-from ..tools.telegram import get_chats
-from .chats import  Chats
+from ..tools.telegram import TelegramApi
+from .chats import Chats
 from .writer import Writer
 from .messages import Messages
 
 # sizes of windows
-CHATS_WIDTH = 1
-MESSAGES_WIDTH = 4
+CHATS_WIDTH = 2
+MESSAGES_WIDTH = 3
 WRITER_HEIGHT = 1
 MESSAGES_HEIGHT = 6
 
@@ -16,9 +17,7 @@ CHATS_MARGIN = 1
 WRITER_MARGIN = 3
 
 # number of color pair
-ACTIVE_CHAT = 1
-INACTIVE_CHAT = 2
-ALERT = 3
+COLORS = {}
 
 # global vars:
 main_window = None
@@ -28,17 +27,35 @@ writer = None
 
 active_chat = None
 
+telegram_api = None
+
 
 def init_colors():
+    global COLORS
+    ACTIVE_CHAT = 1
+    INACTIVE_CHAT = 2
+    ALERT = 3
+
     curses.start_color()
     curses.init_pair(ACTIVE_CHAT, curses.COLOR_BLACK, curses.COLOR_BLUE)
-    curses.init_pair(INACTIVE_CHAT, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(INACTIVE_CHAT, curses.COLOR_BLUE, curses.COLOR_BLACK)
     curses.init_pair(ALERT, curses.COLOR_BLACK, curses.COLOR_RED)
+
+    COLORS = {
+        'active': curses.color_pair(ACTIVE_CHAT),
+        'inactive': curses.color_pair(INACTIVE_CHAT),
+        'alert': curses.color_pair(ALERT)
+    }
+    print(COLORS)
+
+    chats.init_colors(COLORS)
 
 
 def init_windows():
     global main_window, chats, messages, writer
     main_window = curses.initscr()
+    curses.noecho()
+    curses.curs_set(0)
     height, width = main_window.getmaxyx()
 
     chats_width, messages_height = get_sizes(height, width)
@@ -65,16 +82,35 @@ def get_sizes(height, width):
     return chats_width, messages_height
 
 
-def init():
+def init_api(api_id, api_hash):
+    global telegram_api
+    telegram_api = TelegramApi(api_id, api_hash)
+
+
+def init(api_id, api_hash):
+    init_api(api_id, api_hash)
     init_windows()
     init_colors()
-    # loop()
+
     draw_chats()
 
+
+
+
+    loop()
+
+
+
+
+
+
 def draw_chats():
-    chat_list = get_chats()
+    chat_list = telegram_api.get_chats()
     chats.set_chat_list(chat_list)
-    sleep(3)
+    pass
+
+
+def reload_active_chat():
     pass
 
 
@@ -89,4 +125,16 @@ def draw_writer():
 def loop():
     ch = main_window.getch()
     while ch:
-        pass
+        if ch == ord('j'):
+            chats.move_down()
+        if ch == ord('k'):
+            chats.move_up()
+        if ch == ord('q'):
+            main_window.clear()
+            main_window.refresh()
+            exit(0)
+        if ch == ord('i'):
+            #insert mode
+            pass
+
+        ch = main_window.getch()
