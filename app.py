@@ -1,7 +1,7 @@
 import curses
-import teletools
+import teletools.core.core
 
-
+teletools.core.core.init()
 
 
 
