@@ -5,6 +5,7 @@ from ..tools.telegram import TelegramApi
 from .chats import Chats
 from .writer import Writer
 from .messages import Messages
+import string
 
 # sizes of windows
 CHATS_WIDTH = 2
@@ -35,20 +36,24 @@ def init_colors():
     ACTIVE_CHAT = 1
     INACTIVE_CHAT = 2
     ALERT = 3
+    AUTHOR = 4
 
     curses.start_color()
     curses.init_pair(ACTIVE_CHAT, curses.COLOR_BLACK, curses.COLOR_BLUE)
     curses.init_pair(INACTIVE_CHAT, curses.COLOR_BLUE, curses.COLOR_BLACK)
-    curses.init_pair(ALERT, curses.COLOR_BLACK, curses.COLOR_RED)
+    curses.init_pair(ALERT, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+    curses.init_pair(AUTHOR, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
     COLORS = {
         'active': curses.color_pair(ACTIVE_CHAT),
         'inactive': curses.color_pair(INACTIVE_CHAT),
-        'alert': curses.color_pair(ALERT)
+        'alert': curses.color_pair(ALERT),
+        'author': curses.color_pair(AUTHOR)
     }
     print(COLORS)
 
     chats.init_colors(COLORS)
+    messages.init_colors(COLORS)
 
 
 def init_windows():
@@ -131,6 +136,10 @@ def loop():
         if ch == ord('k'):
             chats.move_up()
             draw_messages()
+        if ch == ord('K'):
+            messages.move_up()
+        if ch == ord('J'):
+            messages.move_down()
         if ch == ord('q'):
             main_window.clear()
             main_window.refresh()

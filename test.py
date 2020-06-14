@@ -14,3 +14,7 @@ main_window.refresh()
 
 # curses.flash()
 # curses.echo()
+
+with open('echo.txt', 'w') as f:
+    f.write(str(msg.__dict__))
+    exit(0)

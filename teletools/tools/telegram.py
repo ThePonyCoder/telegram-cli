@@ -20,12 +20,19 @@ class TelegramApi:
 
     def get_messages(self, id):
         async def get_messages(self, id):
-            return await self.client.get_messages(id,limit=20)
+            return await self.client.get_messages(id, limit=50)
+
+        async def get_entity(self, ids):
+            return await self.client.get_entity(ids)
 
         messages = self.client.loop.run_until_complete(get_messages(self, id))
         data = []
-        for i in messages:
-            data.append(Message(i.id, i.text, i))
+        from_message_ids = [i.from_id if i.post is False else 'me' for i in messages]
+        message_entities = self.client.loop.run_until_complete(get_entity(self, from_message_ids))
+        chat = self.client.loop.run_until_complete(get_entity(self, id))
+        for msg, entity in zip(messages, message_entities):
+            entity = None if msg.post is True else entity
+            data.append(Message(message=msg, entity=entity, chat=chat))
         return data
 
 

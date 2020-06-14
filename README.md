@@ -18,3 +18,6 @@ telegram-cli is a telegram command line interface written in python with curses.
 - archived chats
 - new message highlighting
 - auth mechanism
+- redrawing everything when window resize
+- search messages/chats
+- scrolling
