@@ -1,4 +1,5 @@
 from ..classes.chat import Chat
+from ..classes.message import Message
 from telethon import TelegramClient
 from pprint import pprint
 
@@ -9,17 +10,28 @@ class TelegramApi:
         self.client.start()
 
     def get_chats(self):
-        async def get_chat_list(self):
+        async def get_chats(self):
             return await self.client.get_dialogs()
 
-        chat_list = self.client.loop.run_until_complete(get_chat_list(self))
+        chats = self.client.loop.run_until_complete(get_chats(self))
 
-        chat_list = [Chat(i.id, i.name, i) for i in chat_list]
-        return chat_list
+        chats = [Chat(i.id, i.name, i) for i in chats]
+        return chats
+
+    def get_messages(self, id):
+        async def get_messages(self, id):
+            return await self.client.get_messages(id,limit=20)
+
+        messages = self.client.loop.run_until_complete(get_messages(self, id))
+        data = []
+        for i in messages:
+            data.append(Message(i.id, i.text, i))
+        return data
 
 
 def auth():
     pass
+
 
 def get_messages():
     pass

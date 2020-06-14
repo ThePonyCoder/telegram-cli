@@ -60,6 +60,9 @@ class Chats:
         self.active_chat = self.chat_list[pos]
         self._draw_chats(start,end)
 
+    @property
+    def active_id(self):
+        return self.active_chat.id
 
 
     @property

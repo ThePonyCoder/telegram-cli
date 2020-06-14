@@ -93,7 +93,7 @@ def init(api_id, api_hash):
     init_colors()
 
     draw_chats()
-
+    draw_messages()
 
 
 
@@ -107,7 +107,6 @@ def init(api_id, api_hash):
 def draw_chats():
     chat_list = telegram_api.get_chats()
     chats.set_chat_list(chat_list)
-    pass
 
 
 def reload_active_chat():
@@ -115,7 +114,8 @@ def reload_active_chat():
 
 
 def draw_messages():
-    pass
+    messages_list = telegram_api.get_messages(chats.active_id)
+    messages.set_message_list(messages_list)
 
 
 def draw_writer():
@@ -127,14 +127,20 @@ def loop():
     while ch:
         if ch == ord('j'):
             chats.move_down()
+            draw_messages()
         if ch == ord('k'):
             chats.move_up()
+            draw_messages()
         if ch == ord('q'):
             main_window.clear()
             main_window.refresh()
             exit(0)
         if ch == ord('i'):
-            #insert mode
+            # insert mode
             pass
+        if ch == ord('r'):
+            # reload ui
+            pass
+
 
         ch = main_window.getch()
