@@ -10,9 +10,9 @@ class Chats:
         self.chat_list = None
         self.colors = None
 
-    def set_chat_list(self, chat_list):
+    def set_chat_list(self, chat_list, reactive = True):
         self.chat_list = chat_list
-        if self.active_chat is None:
+        if self.active_chat is None or reactive:
             self.active_chat = self.chat_list[0]
 
         self._draw_chats(0, self.height)

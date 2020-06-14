@@ -84,3 +84,7 @@ class Messages:
             }
         """
         self.colors = colors
+
+    def clear(self):
+        self.window.clear()
+        self.window.refresh()

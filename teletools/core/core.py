@@ -1,10 +1,12 @@
 import curses
-import  curses.textpad
+import curses.textpad
 from time import sleep
 from ..tools.telegram import TelegramApi
 from .chats import Chats
 from .writer import Writer
 from .messages import Messages
+from ..classes.modes import MODE
+from ..classes.chat import Chat
 import string
 
 # sizes of windows
@@ -25,10 +27,11 @@ main_window = None
 chats = None
 messages = None
 writer = None
-
 active_chat = None
-
 telegram_api = None
+
+# mods
+mode = MODE.CHATS
 
 
 def init_colors():
@@ -100,18 +103,17 @@ def init(api_id, api_hash):
     draw_chats()
     draw_messages()
 
-
-
     loop()
 
 
-
-
-
-
-def draw_chats():
-    chat_list = telegram_api.get_chats()
-    chats.set_chat_list(chat_list)
+def draw_chats(reactive=False):
+    if mode == MODE.CHATS:
+        chat_list = [i for i in telegram_api.get_chats() if i.archived is False]
+        chat_list.insert(0, Chat(chat=None))  # This is archive folder!
+        chats.set_chat_list(chat_list,reactive=reactive)
+    if mode == MODE.ARCHIVED:
+        chat_list = [i for i in telegram_api.get_chats() if i.archived is True]
+        chats.set_chat_list(chat_list, reactive=reactive)
 
 
 def reload_active_chat():
@@ -119,8 +121,11 @@ def reload_active_chat():
 
 
 def draw_messages():
-    messages_list = telegram_api.get_messages(chats.active_id)
-    messages.set_message_list(messages_list)
+    if chats.active_id:  # check if we selected archive folder!
+        messages_list = telegram_api.get_messages(chats.active_id)
+        messages.set_message_list(messages_list)
+    else:
+        messages.clear()
 
 
 def draw_writer():
@@ -128,6 +133,7 @@ def draw_writer():
 
 
 def loop():
+    global mode
     ch = main_window.getch()
     while ch:
         if ch == ord('j'):
@@ -144,12 +150,19 @@ def loop():
             main_window.clear()
             main_window.refresh()
             exit(0)
+        if ch == ord('l') and mode == MODE.CHATS and chats.active_id == 0:
+            mode = MODE.ARCHIVED
+            draw_chats(reactive=True)
+            draw_messages()
+        if ch == ord('h') and mode == MODE.ARCHIVED:
+            mode = MODE.CHATS
+            draw_chats(reactive=True)
+            draw_messages()
         if ch == ord('i'):
             # insert mode
             pass
         if ch == ord('r'):
             # reload ui
             pass
-
 
         ch = main_window.getch()

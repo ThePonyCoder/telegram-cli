@@ -15,12 +15,12 @@ class TelegramApi:
 
         chats = self.client.loop.run_until_complete(get_chats(self))
 
-        chats = [Chat(i.id, i.name, i) for i in chats]
+        chats = [Chat(i) for i in chats]
         return chats
 
     def get_messages(self, id):
         async def get_messages(self, id):
-            return await self.client.get_messages(id, limit=50)
+            return await self.client.get_messages(id, limit=15)
 
         async def get_entity(self, ids):
             return await self.client.get_entity(ids)
