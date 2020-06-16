@@ -20,7 +20,7 @@ class TelegramApi:
 
     def get_messages(self, id):
         async def get_messages(self, id):
-            return await self.client.get_messages(id, limit=15)
+            return await self.client.get_messages(id, limit=10)
 
         async def get_entity(self, ids):
             return await self.client.get_entity(ids)

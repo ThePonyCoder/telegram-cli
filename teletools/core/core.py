@@ -1,5 +1,6 @@
 import curses
 import curses.textpad
+import threading
 from time import sleep
 from ..tools.telegram import TelegramApi
 from .chats import Chats
@@ -30,8 +31,15 @@ writer = None
 active_chat = None
 telegram_api = None
 
+
 # mods
 mode = MODE.CHATS
+
+# threads
+messages_thread = None
+
+
+
 
 
 def init_colors():
@@ -53,7 +61,6 @@ def init_colors():
         'alert': curses.color_pair(ALERT),
         'author': curses.color_pair(AUTHOR)
     }
-    print(COLORS)
 
     chats.init_colors(COLORS)
     messages.init_colors(COLORS)
@@ -95,13 +102,20 @@ def init_api(api_id, api_hash):
     telegram_api = TelegramApi(api_id, api_hash)
 
 
+def init_threads():
+    global messages_thread
+    messages_thread = threading.Thread(target=draw_messages)
+
+
 def init(api_id, api_hash):
     init_api(api_id, api_hash)
     init_windows()
     init_colors()
 
+    init_threads()
+
     draw_chats()
-    draw_messages()
+    draw_messages_thread()
 
     loop()
 
@@ -110,7 +124,7 @@ def draw_chats(reactive=False):
     if mode == MODE.CHATS:
         chat_list = [i for i in telegram_api.get_chats() if i.archived is False]
         chat_list.insert(0, Chat(chat=None))  # This is archive folder!
-        chats.set_chat_list(chat_list,reactive=reactive)
+        chats.set_chat_list(chat_list, reactive=reactive)
     if mode == MODE.ARCHIVED:
         chat_list = [i for i in telegram_api.get_chats() if i.archived is True]
         chats.set_chat_list(chat_list, reactive=reactive)
@@ -120,7 +134,7 @@ def reload_active_chat():
     pass
 
 
-def draw_messages():
+def draw_messages_thread():
     if chats.active_id:  # check if we selected archive folder!
         messages_list = telegram_api.get_messages(chats.active_id)
         messages.set_message_list(messages_list)
@@ -128,8 +142,22 @@ def draw_messages():
         messages.clear()
 
 
+def draw_messages():
+    draw_messages_thread()
+
+
 def draw_writer():
     pass
+
+
+def redraw():
+    main_window.clear()
+    main_window.refresh()
+    init_windows()
+    init_colors()
+
+    draw_chats()
+    draw_messages_thread()
 
 
 def loop():
@@ -138,10 +166,10 @@ def loop():
     while ch:
         if ch == ord('j'):
             chats.move_down()
-            draw_messages()
+            draw_messages_thread()
         if ch == ord('k'):
             chats.move_up()
-            draw_messages()
+            draw_messages_thread()
         if ch == ord('K'):
             messages.move_up()
         if ch == ord('J'):
@@ -153,15 +181,16 @@ def loop():
         if ch == ord('l') and mode == MODE.CHATS and chats.active_id == 0:
             mode = MODE.ARCHIVED
             draw_chats(reactive=True)
-            draw_messages()
+            draw_messages_thread()
         if ch == ord('h') and mode == MODE.ARCHIVED:
             mode = MODE.CHATS
             draw_chats(reactive=True)
-            draw_messages()
+            draw_messages_thread()
         if ch == ord('i'):
             # insert mode
             pass
         if ch == ord('r'):
+            redraw()
             # reload ui
             pass
 
