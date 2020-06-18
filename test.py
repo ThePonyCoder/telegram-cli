@@ -1,20 +1,11 @@
 import curses
+from pprint import pprint
 from time import sleep
 
+from teletools.tools.telegram import TelegramApi
 
-main_window = curses.initscr()
-curses.start_color()
+with open('auth.txt', 'r') as f:
+    api_id = f.readline().strip()
+    api_hash = f.readline().strip()
 
-
-curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_BLUE)
-names = ['asdzxc','pony 123', 'alekseB', 'amazonka', 'zver1337', 'aleluja']
-for id,i in enumerate(names+names):
-    main_window.insstr(id,1,f'{id:>2}  {i}',curses.color_pair(1) | curses.A_BOLD)
-main_window.refresh()
-
-# curses.flash()
-# curses.echo()
-
-with open('echo.txt', 'w') as f:
-    f.write(str(msg.__dict__))
-    exit(0)
+    TelegramApi(api_id, api_hash)

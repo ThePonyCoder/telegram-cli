@@ -1,40 +1,82 @@
 import sys
 import curses
+from ..classes.modes import DRAWMODE
 
 
 class Messages:
     def __init__(self, window):
-        self.window = window
-        self.colors = None
-        self.message_list = None
-        self.active_msg = None
-        self.shift = None
+        self.window = window  # curses.window
+        self.colors = None  # color palette
+        self.message_list = None  # list of Message objects
+        self.active_msg = None  # Message object
+        self.shift = None  # draw message_list with this shift
+        self.drown_number = 0  # number of messages that are drown on the screen
+
+    # def selection_toggle(self):
+    #     if self.active_msg is None:
+    #         self.active_msg = self.message_list[0]
+    #     else:
+    #         self.active_msg = None
+    #     self._update_active_msg()
 
     def set_message_list(self, message_list):
+        """message_list - list of Message from classes.message"""
         self.message_list = message_list
+        self._update_active_msg()
         self.shift = 0
         self._draw_messages()
 
+    def _update_active_msg(self):
+        """This function helps to keep active msg when updating message list"""
+
+        for i in self.message_list:
+            if self.active_msg is None and i.mode == DRAWMODE.SELECTED:
+                i.mode  = DRAWMODE.DEFAULT
+            if self.active_msg is None:
+                continue
+            elif i.message == self.active_msg.message:
+                i.mode = DRAWMODE.SELECTED
+            elif i.mode == DRAWMODE.SELECTED:
+                i.mode = DRAWMODE.DEFAULT
+
     def move_up(self):
+        if self.active_msg is None:
+            self.active_msg = self.message_list[0]
         if self.shift < self.message_list.__len__():
             self.shift += 1
+
+        if self.active_msg_index < (len(self.message_list) - 1):
+            self.active_msg = self.message_list[self.active_msg_index + 1]
+            self._update_active_msg()
         self._draw_messages()
 
     def move_down(self):
+        if self.active_msg is None:
+            return
         if self.shift > 0:
             self.shift -= 1
+        if self.active_msg_index > 0:
+            self.active_msg = self.message_list[self.active_msg_index - 1]
+            self._update_active_msg()
+        else:
+            self.active_msg = None
         self._draw_messages()
+
+    @property
+    def active_msg_index(self):
+        return self.message_list.index(self.active_msg)
 
     def _draw_messages(self):
         self.window.clear()
         line = self.height - 1
+        self.drown_number = 0
         for msg in self.message_list[self.shift:]:
             splited = self.split_msg(msg.text)
             if msg.text == '':
                 splited = ['[content]']
 
             while line >= 0 and len(splited):
-                self.window.insstr(line, 0, splited[-1])
+                self.window.insstr(line, 0, splited[-1], self.colors[msg.mode])
                 splited = splited[:-1]
                 line -= 1
             if line >= 0:
@@ -42,10 +84,13 @@ class Messages:
             line -= 2
             if line < 0:
                 break
+            self.drown_number += 1
 
         self.window.refresh()
 
     def split_msg(self, text):
+        if not isinstance(text, str):
+            return ''
         text = text.strip()
         lines = [i for i in text.split('\n') if i != '']
         out = []

@@ -1,10 +1,12 @@
 import sqlite3
+from pprint import pprint
 
 
 class Database:
-    def __init__(self):
-        self.conn = sqlite3.connect('example.db')
-        self.cursor = self.conn.cursor()
+    def __init__(self, db_name='db.db'):
+        self.db_name = db_name
+        self.conn = None
+        self.cursor = None
 
         self.create_tables()
 
@@ -98,8 +100,98 @@ class Database:
             ])
         self.commit()
 
-    def get_messages(self, limit=10, max_id=None, min_id=None):
+    def get_messages(self, chat_id, limit=10, max_id=None, min_id=None):
+        cursor = None
+        if max_id is None and min_id is None:
+            cursor = self.cursor.execute("""
+                SELECT * from messages
+                WHERE 
+                    to_id=?
+                ORDER BY 
+                    date DESC
+                LIMIT ?;
+            """, [chat_id, limit])
+        messages = []
+        for i in cursor:
+            message = {
+                'id': i[0],
+                'to_id': i[1],
+                'out': i[2],
+                'mentioned': i[3],
+                'media_unread': i[4],
+                'silent': i[5],
+                'post': i[6],
+                'post_author': i[7],
+                'date': i[8],
+                'message': i[9],
+                'from_id': i[10],
+                'via_bot_id': i[11],
+                'views': i[12],
+                'edit_date': i[13],
 
+                'is_reply': i[14],
+                'reply_to_msg_id': i[15],
+
+                'forward': i[16],
+                'forward_from_id': i[17],
+                'forward_from_name': i[18],
+                'forward_channel_id': i[19],
+                'forward_channel_post': i[20],
+                'forward_post_author': i[21],
+
+                'media': i[22],
+                'photo': i[23],
+                'audio': i[24],
+                'voice': i[25],
+                'document': i[26],
+                'video': i[27],
+                'file': i[28],
+                'gif': i[29],
+                'invoice': i[30],
+                'poll': i[31],
+                'sticker': i[32]
+            }
+            messages.append(message)
+        return messages
+
+    def get_dialogs(self, archived=False):
+        # TODO execute by achived bool
+        if archived is False:
+            dialogs_list = self.cursor.execute("""
+                SELECT * from dialogs
+                WHERE
+                    archived=0
+                ORDER BY 
+                    date DESC
+            """).fetchall()
+        else:
+            dialogs_list = self.cursor.execute("""
+                SELECT * from dialogs
+                WHERE
+                    archived=1
+                ORDER BY 
+                    date DESC
+            """).fetchall()
+
+        dialogs = {}
+        for i in dialogs_list:
+            dialog = {
+                'id': i[0],
+                'pinned': i[1],
+                'archived': i[2],
+                'date': i[3],
+                'name': i[4],
+                'is_user': i[5],
+                'is_group': i[6],
+                'is_channel': i[7]
+            }
+
+    def get_dialog_name(self, id):
+        return self.cursor.execute("""
+            SELECT name from dialogs
+            WHERE 
+                id=?
+        """, [id]).fetchall()[0]
 
     def create_tables(self):
         self.cursor.execute("""
@@ -166,7 +258,7 @@ class Database:
 if __name__ == '__main__':
     from telethon import events, TelegramClient
 
-    client = TelegramClient('session', )
+    client = TelegramClient('session', )  # token huoken)
 
 
     async def main():
@@ -177,14 +269,16 @@ if __name__ == '__main__':
 
 
     async def get_messages(dialogs):
-        messages = await client.get_messages(dialogs)
-        return messages
+        _messages = await client.get_messages(dialogs, limit=30)
+        return _messages
 
 
-    with client:
-        dialogs = client.loop.run_until_complete(main())
-        messages = client.loop.run_until_complete(get_messages(dialogs[0].id))
+    # with client:
+    #     dialogs = client.loop.run_until_complete(main())
+    #     messages = client.loop.run_until_complete(get_messages(dialogs[0].id))
     db = Database()
-    db.update_dialogs(dialogs)
-    db.update_messages(messages)
+    # db.update_dialogs(dialogs)
+    # db.update_messages(messages)
+    pprint(db.get_messages(1123575655))
+
     # print(dialogs[0].date.timestamp())

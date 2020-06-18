@@ -1,5 +1,7 @@
 import string
 from enum import Enum, auto
+from ..classes.modes import DRAWMODE
+
 
 class MESSAGE_TYPE(Enum):
     TEXT = auto()
@@ -13,6 +15,7 @@ class Message:
         self.message = message
         self.entity = entity
         self.chat = chat
+        self.mode = DRAWMODE.DEFAULT
 
 
     @property
@@ -27,24 +30,17 @@ class Message:
     def title(self):
         if self.entity:
             if 'title' in self.entity.__dict__:
-                return self._deunicode(self.entity.title)
+                return self.entity.title
             title = ''
             if 'first_name' in self.entity.__dict__ and self.entity.first_name:
                 title += self.entity.first_name
             if 'last_name' in self.entity.__dict__ and self.entity.last_name:
                 title += ' ' if title else ''
                 title += self.entity.last_name
-            return self._deunicode(title)
+            return title
         else:
-            return self._deunicode(self.chat.title)
-
-    @staticmethod
-    def _deunicode(text):
-        return text
-        # printable = set(string.printable)
-        # return ''.join(filter(lambda x: x in printable, text))
+            return self.chat.title
 
     @property
     def from_username(self):
         return 'TODO'
-

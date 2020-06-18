@@ -62,7 +62,8 @@ class Chats:
 
     @property
     def active_id(self):
-        return self.active_chat.id
+        if self.active_chat is not None:
+            return self.active_chat.id
 
 
     @property
