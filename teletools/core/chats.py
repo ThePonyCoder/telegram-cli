@@ -9,40 +9,61 @@ class Chats:
         self.active_chat = None
         self.chat_list = None
         self.colors = None
+        self.start = 0
+        self.end = 0
 
-    def set_chat_list(self, chat_list, reactive = True):
+    def set_chat_list(self, chat_list):
         self.chat_list = chat_list
-        if self.active_chat is None or reactive:
-            self.active_chat = self.chat_list[0]
+        self._draw_chats()
 
-        self._draw_chats(0, self.height)
-
-    def _draw_chats(self, start=0, end=1):
+    def _draw_chats(self):
+        self.update_viewrange()
         self.window.erase()
-        for line, chat in enumerate(self.chat_list[start:end]):
+        for line, chat in enumerate(self.chat_list[self.start:self.end]):
+            status = self._get_chat_status(chat)
+            name = (status + chat['name']).ljust(self.width)[:self.width-1] + ' '
             if chat == self.active_chat:
-                self.window.insstr(line, 0, chat.name.ljust(self.width), curses.A_BOLD | self.colors['active'])
+                self.window.insstr(line, 0, name, curses.A_BOLD | self.colors['active'])
             else:
-                self.window.insstr(line, 0, chat.name.ljust(self.width), curses.A_BOLD | self.colors['inactive'])
+                self.window.insstr(line, 0, name, curses.A_BOLD | self.colors['inactive'])
 
         self.window.refresh()
+
+    @staticmethod
+    def _get_chat_status(chat):
+        status = ' ['
+        status += 'p' if chat['pinned'] else '-'
+        if chat['is_user']:
+            status += 'u'
+        elif chat['is_channel']:
+            status += 'c'
+        elif chat['is_group']:
+            status += 'g'
+        else:
+            status += '-'
+        status += '] '
+        return status
 
     def move_up(self):
         active_chat_pos = self.chat_list.index(self.active_chat)
         if active_chat_pos == 0:
             return
-        self.change_active(active_chat_pos - 1)
+        self.active_chat = self.chat_list[active_chat_pos - 1]
+        self._draw_chats()
 
     def move_down(self):
         active_chat_pos = self.chat_list.index(self.active_chat)
-        self.window.erase()
-
-        if active_chat_pos == len(self.chat_list)-1:
+        if active_chat_pos == len(self.chat_list) - 1:
             return
-        self.change_active(active_chat_pos + 1)
+        self.active_chat = self.chat_list[active_chat_pos + 1]
+        self._draw_chats()
 
-    def change_active(self, pos):
+    def update_viewrange(self):
         start, end = None, None
+        if self.active_chat not in self.chat_list:
+            self.active_chat = self.chat_list[0]
+
+        pos = self.chat_list.index(self.active_chat)
         if len(self.chat_list) < self.height:
             start = 0
             end = self.height
@@ -56,15 +77,13 @@ class Chats:
             if len(self.chat_list) < end:
                 end = len(self.chat_list)
                 start = end - self.height
-        # print(start,end)
-        self.active_chat = self.chat_list[pos]
-        self._draw_chats(start,end)
+        self.start = start
+        self.end = end
 
     @property
     def active_id(self):
         if self.active_chat is not None:
-            return self.active_chat.id
-
+            return self.active_chat['id']
 
     @property
     def height(self):

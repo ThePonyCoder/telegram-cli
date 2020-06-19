@@ -10,3 +10,7 @@ class MODE(Enum):
 class DRAWMODE(Enum):
     SELECTED = auto()
     DEFAULT = auto()
+
+class FOLDER(Enum):
+    DEFAULT = auto()
+    ARHIVED = auto()

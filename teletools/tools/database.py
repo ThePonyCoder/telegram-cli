@@ -5,21 +5,29 @@ from pprint import pprint
 class Database:
     def __init__(self, db_name='db.db'):
         self.db_name = db_name
-        self.conn = None
-        self.cursor = None
 
+        # self.conn = None
+        # cursor = None
+
+        # creating default tables
         self.create_tables()
 
+    def connect(self):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        return conn, cursor
+
     def update_dialogs(self, dialogs_obj):
+        conn, cursor = self.connect()
         if not isinstance(dialogs_obj, list):
             dialogs_obj = [dialogs_obj]
 
         for dialog_obj in dialogs_obj:
-            self.cursor.execute("""
+            cursor.execute("""
                 DELETE FROM dialogs
                 WHERE id = ?
             """, [dialog_obj.id])
-            self.cursor.execute("""
+            cursor.execute("""
                 INSERT INTO dialogs
                 VALUES (?,?,?,?,?,?,?,?)
             """, [
@@ -32,27 +40,32 @@ class Database:
                 dialog_obj.is_group,
                 dialog_obj.is_channel,
             ])
-        self.commit()
+        conn.commit()
+        conn.close()
 
-    def update_messages(self, messages_obj):
+    def update_messages(self, messages_obj, dialog_id):
+        # TODO: change dialog update time
+        conn, cursor = self.connect()
         if not isinstance(messages_obj, list):
             messages_obj = [messages_obj]
 
         for message_obj in messages_obj:
+            if not message_obj.from_name:
+                message_obj.from_name = self.get_dialog_name(dialog_id)
             to_id = None
             if hasattr(message_obj.to_id, 'user_id'):
                 to_id = message_obj.to_id.user_id
             if hasattr(message_obj.to_id, 'chat_id'):
-                to_id = message_obj.to_id.chat_id
+                to_id = message_obj.to_id.chat_id * -1
             if hasattr(message_obj.to_id, 'channel_id'):
-                to_id = message_obj.to_id.channel_id
+                to_id = int('-100' + str(message_obj.to_id.channel_id))
 
-            self.cursor.execute("""
+            cursor.execute("""
                 DELETE FROM messages
-                WHERE (to_id,id) = (?,?)
-            """, [to_id, message_obj.id])
+                WHERE (dialog_id,id) = (?,?)
+            """, [dialog_id, message_obj.id])
 
-            self.cursor.execute("""
+            cursor.execute("""
                 INSERT INTO messages
                 VALUES (
                     ?,?,?,?,?,
@@ -61,11 +74,12 @@ class Database:
                     ?,?,?,?,?,
                     ?,?,?,?,?,
                     ?,?,?,?,?,
-                    ?,?,?
+                    ?,?,?,?,?,
+                    ?
                 )
             """, [
                 message_obj.id,
-                to_id,
+                dialog_id,
                 message_obj.out,
                 message_obj.mentioned,
                 message_obj.media_unread,
@@ -97,25 +111,30 @@ class Database:
                 True if message_obj.invoice else False,
                 True if message_obj.poll else False,
                 True if message_obj.sticker else False,
+                to_id,
+                str(message_obj.from_name),
+                str(message_obj.from_username)
             ])
-        self.commit()
+        conn.commit()
+        conn.close()
 
-    def get_messages(self, chat_id, limit=10, max_id=None, min_id=None):
-        cursor = None
+    def get_messages(self, dialog_id, limit=10, max_id=None, min_id=None):
+
+        conn, cursor = self.connect()
         if max_id is None and min_id is None:
-            cursor = self.cursor.execute("""
+            cursor = cursor.execute("""
                 SELECT * from messages
                 WHERE 
-                    to_id=?
+                    dialog_id=?
                 ORDER BY 
                     date DESC
                 LIMIT ?;
-            """, [chat_id, limit])
+            """, [dialog_id, limit])
         messages = []
         for i in cursor:
             message = {
                 'id': i[0],
-                'to_id': i[1],
+                'dialog_id': i[1],
                 'out': i[2],
                 'mentioned': i[3],
                 'media_unread': i[4],
@@ -149,31 +168,34 @@ class Database:
                 'gif': i[29],
                 'invoice': i[30],
                 'poll': i[31],
-                'sticker': i[32]
+                'sticker': i[32],
+                'to_id': i[33],
+                'from_name': i[34],
+                'from_username': i[35]
             }
             messages.append(message)
+        conn.commit()
+        conn.close()
         return messages
 
     def get_dialogs(self, archived=False):
-        # TODO execute by achived bool
-        if archived is False:
-            dialogs_list = self.cursor.execute("""
-                SELECT * from dialogs
-                WHERE
-                    archived=0
-                ORDER BY 
-                    date DESC
-            """).fetchall()
+        if archived:
+            archived = 1
         else:
-            dialogs_list = self.cursor.execute("""
-                SELECT * from dialogs
-                WHERE
-                    archived=1
-                ORDER BY 
-                    date DESC
-            """).fetchall()
+            archived = 0
 
-        dialogs = {}
+        conn, cursor = self.connect()
+        # TODO execute by archived bool
+
+        dialogs_list = cursor.execute("""
+            SELECT * from dialogs
+            WHERE
+                archived=?
+            ORDER BY 
+                pinned DESC, date DESC
+        """, [archived]).fetchall()
+
+        dialogs = []
         for i in dialogs_list:
             dialog = {
                 'id': i[0],
@@ -185,16 +207,71 @@ class Database:
                 'is_group': i[6],
                 'is_channel': i[7]
             }
+            dialogs.append(dialog)
+        conn.commit()
+        conn.close()
+        return dialogs
 
     def get_dialog_name(self, id):
-        return self.cursor.execute("""
+
+        conn, cursor = self.connect()
+        name = cursor.execute("""
             SELECT name from dialogs
             WHERE 
                 id=?
-        """, [id]).fetchall()[0]
+        """, [id]).fetchall()[0][0]
+        conn.commit()
+        conn.close()
+        return name
+
+    def update_user(self, user):
+        conn, cursor = self.connect()
+        cursor.execute("""
+            DELETE FROM 
+                users
+            WHERE 
+                id=?
+        """, [user.id])
+
+        cursor.execute("""
+            INSERT INTO 
+                users
+            VALUES 
+                (?,?,?)
+        """, [user.id,
+              (user.first_name if user.first_name else '')
+              + (' ' if user.first_name else '')
+              + (user.last_name if user.last_name else ''),
+              user.username])
+        conn.commit()
+        conn.close()
+
+    def get_user_name(self, id):
+        """
+        :param id: user_id
+        :return: [username, name] if exist or [None,None]
+        """
+        conn, cursor = self.connect()
+        rows = cursor.execute("""
+            SELECT 
+                name, username 
+            FROM 
+                users
+            WHERE
+                id=?
+                
+        """, [id]).fetchall()
+        conn.close()
+        if rows:
+            name, username = rows[0]
+        else:
+            username, name = None, None
+        return username, name
 
     def create_tables(self):
-        self.cursor.execute("""
+
+        conn, cursor = self.connect()
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS dialogs(
                 id INTEGER UNIQUE,
                 pinned INTEGER,
@@ -207,10 +284,10 @@ class Database:
             );
         """)
 
-        self.cursor.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS messages(
                 id INTEGER,
-                to_id INTEGER,
+                dialog_id INTEGER,
                 out INTEGER,
                 mentioned INTEGER,
                 media_unread INTEGER,
@@ -246,39 +323,43 @@ class Database:
                 gif INTEGER,
                 invoice INTEGER,
                 poll INTEGER,
-                sticker INTEGER                                                  
+                sticker INTEGER,    
+                
+                to_id INTEGER,  
+                from_name TEXT,
+                from_username TEXT                            
             );
         """)
-        self.commit()
-
-    def commit(self):
-        self.conn.commit()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users(
+                id INTEGER,
+                name TEXT,
+                username TEXT         
+            );
+        """)
+        conn.commit()
+        conn.close()
 
 
 if __name__ == '__main__':
     from telethon import events, TelegramClient
 
-    client = TelegramClient('session', )  # token huoken)
+    with open('auth.txt', 'r') as f:
+        api_id = f.readline().strip()
+        api_hash = f.readline().strip()
+        client = TelegramClient('session', api_id, api_hash)  # token huoken)
+        client.start()
 
 
     async def main():
         dialogs = await client.get_dialogs()
-        return dialogs
-
-        # client.start()
-
-
-    async def get_messages(dialogs):
-        _messages = await client.get_messages(dialogs, limit=30)
-        return _messages
+        for dia in dialogs:
+            messages = await client.get_messages(dia.id, limit=30)
+            print(messages[3].to_id, dia.id)
 
 
-    # with client:
-    #     dialogs = client.loop.run_until_complete(main())
-    #     messages = client.loop.run_until_complete(get_messages(dialogs[0].id))
-    db = Database()
-    # db.update_dialogs(dialogs)
-    # db.update_messages(messages)
-    pprint(db.get_messages(1123575655))
+    client.loop.run_until_complete(main())
+
+    # pprint(db.get_messages(1123575655))
 
     # print(dialogs[0].date.timestamp())

@@ -9,8 +9,10 @@ from .writer import Writer
 from .messages import Messages
 from ..classes.modes import MODE
 from ..classes.chat import Chat
-from ..classes.modes import DRAWMODE
+from ..classes.modes import DRAWMODE, FOLDER
 import string
+import asyncio
+import types
 
 # sizes of windows
 CHATS_WIDTH = 2
@@ -25,7 +27,8 @@ WRITER_MARGIN = 3
 
 class Core:
     def __init__(self, api_id, api_hash):
-        self.telegram_api = TelegramApi(api_id, api_hash)
+        self.loop = asyncio.get_event_loop()
+        self.telegram_api = TelegramApi(api_id, api_hash, self.loop)
 
         # curses windows
         self.main_window = None
@@ -35,15 +38,13 @@ class Core:
         # for updating messages in bckg
         self.drawn_active_id = None
         self.messages_processing = False
-        self.exit = False
+        # self.exit = False
 
         self.mode = MODE.CHATS
+        self.folder = FOLDER.DEFAULT
 
         self.init_windows()
         self.init_colors()
-
-        self.draw_chats()
-        # self.draw_messages()
 
     def init_windows(self):
         self.main_window = curses.initscr()
@@ -64,42 +65,36 @@ class Core:
         self.chats = Chats(chats_window)
         self.messages = Messages(messages_window)
 
-    def draw_chats(self, reactive=False):
+    def draw_chats(self, reset_active=False):
+        chat_list = self.telegram_api.get_dialogs(False if self.folder == FOLDER.DEFAULT else True)
+        if self.folder == FOLDER.DEFAULT:
+            chat_list.insert(0, {'name': 'Archived chats',
+                                 'id': 0,
+                                 'is_user': 0,
+                                 'is_group': 0,
+                                 'is_channel': 0,
+                                 'pinned': 0})  # This is archive folder!
+        self.chats.set_chat_list(chat_list)
 
-        chat_list = self.telegram_api.get_dialogs()
-        if self.mode == MODE.CHATS:
-            chat_list = [i for i in chat_list if i.archived is False]
-            chat_list.insert(0, Chat(chat=None))  # This is archive folder!
-            self.chats.set_chat_list(chat_list, reactive=reactive)
-        if self.mode == MODE.ARCHIVED:
-            chat_list = [i for i in chat_list if i.archived is True]
-            self.chats.set_chat_list(chat_list, reactive=reactive)
+    def go_inside(self):
+        if self.folder == FOLDER.DEFAULT and self.active_id == 0:
+            self.folder = FOLDER.ARHIVED
+            self.draw_chats()
+            self.draw_messages()
 
-    def change_mode(self, mode):
-        if mode == MODE.ARCHIVED:
-            self.mode = MODE.ARCHIVED
-            self.draw_chats(reactive=True)
-        if mode == MODE.CHATS:
-            self.mode = MODE.CHATS
-            self.draw_chats(reactive=True)
+    def go_outside(self):
+        if self.folder == FOLDER.ARHIVED:
+            self.folder = FOLDER.DEFAULT
+            self.draw_chats()
+            self.draw_messages()
 
-    def draw_messages_thread(self):
-        while True:
-            if self.real_active_id != self.drawn_active_id:
-                self.messages_processing = True
-                self.drawn_active_id = self.real_active_id
-                if self.real_active_id:  # check if we selected archive folder!
-                    messages_list = self.telegram_api.get_messages(self.real_active_id)
-                    self.messages.set_message_list(messages_list)
-                else:
-                    self.messages.clear()
-                self.messages_processing = False
-            if self.exit:
-                break
-            sleep(0.2)
-
-    def wait_message_draw(self):
-        self.drawn_active_id = self.real_active_id
+    def draw_messages(self):
+        if self.active_id == 0:  # checking archive folder
+            self.messages.clear()
+            return
+        messages_list = self.telegram_api.get_messages(self.active_id)
+        self.log(self.active_id)
+        self.messages.set_message_list(messages_list)
 
     def redraw(self):
         self.main_window.clear()
@@ -123,8 +118,8 @@ class Core:
         curses.init_pair(INACTIVE_CHAT, curses.COLOR_BLUE, curses.COLOR_BLACK)
         curses.init_pair(ALERT, curses.COLOR_BLACK, curses.COLOR_YELLOW)
         curses.init_pair(AUTHOR, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        curses.init_pair(DRAWMODE_DEFAULT, curses.COLOR_WHITE,curses.COLOR_BLACK)
-        curses.init_pair(DRAWMODE_SELECTED, curses.COLOR_YELLOW,curses.COLOR_BLACK)
+        curses.init_pair(DRAWMODE_DEFAULT, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        curses.init_pair(DRAWMODE_SELECTED, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
         COLORS = {
             'active': curses.color_pair(ACTIVE_CHAT),
@@ -150,46 +145,66 @@ class Core:
         return chats_width, messages_height
 
     @property
-    def real_active_id(self):
+    def active_id(self):
         return self.chats.active_id
 
-    def loop(self):
-        # starting draw_messages_thread()
-        # threading.Thread(target=self.draw_messages_thread).start()
+    async def updates_handler(self):
+        while True:
+            if self.telegram_api.new_data:
+                self.draw_chats()
+                self.draw_messages()
 
-        ch = self.main_window.getch()
-        while ch:
+            await asyncio.sleep(1)
+
+    def keyboard_handler(self):
+        while True:
+            ch = self.main_window.getch()
             if ch == ord('j'):
                 self.chats.move_down()
-                # self.draw_messages()
+                self.draw_messages()
             if ch == ord('k'):
                 self.chats.move_up()
-                # self.draw_messages()
-            if ch == ord('K'):
-                self.messages.move_up()
-            if ch == ord('J'):
-                self.messages.move_down()
+                self.draw_messages()
+            if ch == ord('l'):
+                self.go_inside()
+            if ch == ord('h'):
+                self.go_outside()
+            # if ch == ord('K'):
+            #     self.messages.move_up()
+            # if ch == ord('J'):
+            #     self.messages.move_down()
             if ch == ord('q'):
-                self.main_window.clear()
-                self.main_window.refresh()
-                self.exit = True
-                exit(0)
-            if ch == ord('l') and self.mode == MODE.CHATS and self.real_active_id == 0:
-                self.change_mode(MODE.ARCHIVED)
-            if ch == ord('h') and self.mode == MODE.ARCHIVED:
-                self.change_mode(MODE.CHATS)
-            if ch == ord('i'):
-                # insert mode
-                pass
-            if ch == ord('r'):
-                # reload ui
-                self.redraw()
+                self.exit()
+            # if ch == ord('l') and self.mode == MODE.CHATS and self.real_active_id == 0:
+            #     self.change_mode(MODE.ARCHIVED)
+            # if ch == ord('h') and self.mode == MODE.ARCHIVED:
+            #     self.change_mode(MODE.CHATS)
+            # if ch == ord('i'):
+            #     # insert mode
+            #     pass
+            # if ch == ord('r'):
+            #     # reload ui
+            #     self.redraw()
 
-            ch = self.main_window.getch()
+    def exit(self, code=0):
+        self.loop.stop()
+        self.main_window.clear()
+        self.main_window.refresh()
+        exit(code)
+
+    def run(self):
+        # self.loop.create_task(self.draw_chats())
+        self.draw_chats()
+        self.draw_messages()
+        self.loop.create_task(self.updates_handler())
+
+        threading.Thread(target=self.keyboard_handler).start()
+
+        self.loop.run_forever()
 
     @staticmethod
     def log(msg):
-        with open('echo.txt', 'r+') as f:
+        with open('echo.txt', 'w') as f:
             f.write('\n\n\n')
             f.write(str(msg))
             f.write('\n\n\n')
