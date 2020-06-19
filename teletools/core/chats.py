@@ -6,7 +6,7 @@ import curses
 class Chats:
     def __init__(self, window):
         self.window = window
-        self.active_chat = None
+        self.active_chat_id = None
         self.chat_list = None
         self.colors = None
         self.start = 0
@@ -21,8 +21,8 @@ class Chats:
         self.window.erase()
         for line, chat in enumerate(self.chat_list[self.start:self.end]):
             status = self._get_chat_status(chat)
-            name = (status + chat['name']).ljust(self.width)[:self.width-1] + ' '
-            if chat == self.active_chat:
+            name = (status + chat['name']).ljust(self.width)[:self.width - 1] + ' '
+            if chat['id'] == self.active_chat_id:
                 self.window.insstr(line, 0, name, curses.A_BOLD | self.colors['active'])
             else:
                 self.window.insstr(line, 0, name, curses.A_BOLD | self.colors['inactive'])
@@ -45,25 +45,25 @@ class Chats:
         return status
 
     def move_up(self):
-        active_chat_pos = self.chat_list.index(self.active_chat)
+        active_chat_pos = self.active_chat_pos
         if active_chat_pos == 0:
             return
-        self.active_chat = self.chat_list[active_chat_pos - 1]
+        self.active_chat_id = self.chat_list[active_chat_pos - 1]['id']
         self._draw_chats()
 
     def move_down(self):
-        active_chat_pos = self.chat_list.index(self.active_chat)
+        active_chat_pos = self.active_chat_pos
         if active_chat_pos == len(self.chat_list) - 1:
             return
-        self.active_chat = self.chat_list[active_chat_pos + 1]
+        self.active_chat_id = self.chat_list[active_chat_pos + 1]['id']
         self._draw_chats()
 
     def update_viewrange(self):
         start, end = None, None
-        if self.active_chat not in self.chat_list:
-            self.active_chat = self.chat_list[0]
+        if self.active_chat_id not in [i['id'] for i in self.chat_list]:
+            self.active_chat_id = self.chat_list[0]['id']
 
-        pos = self.chat_list.index(self.active_chat)
+        pos = self.active_chat_pos
         if len(self.chat_list) < self.height:
             start = 0
             end = self.height
@@ -82,8 +82,12 @@ class Chats:
 
     @property
     def active_id(self):
-        if self.active_chat is not None:
-            return self.active_chat['id']
+        return self.active_chat_id
+
+    @property
+    def active_chat_pos(self):
+        lst = [idx for idx, it in enumerate(self.chat_list) if it['id'] == self.active_chat_id]
+        return lst[0]
 
     @property
     def height(self):
