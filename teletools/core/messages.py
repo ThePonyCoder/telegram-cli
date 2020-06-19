@@ -1,7 +1,7 @@
 import sys
 import curses
 from pprint import pprint
-
+import time
 from ..classes.modes import DRAWMODE
 
 
@@ -61,23 +61,45 @@ class Messages:
     def active_msg_index(self):
         return self.message_list.index(self.active_msg)
 
+    @staticmethod
+    def get_time(timestamp):
+        time_str = time.strftime('%Y-%m-%d %H:%M', time.localtime(timestamp))
+        return time_str
+
     def _draw_messages(self):
         self.window.clear()
         line = self.height - 1
         self.drown_number = 0
         for msg in self.message_list[self.shift:]:
+
+            if msg['media'] and line >= 0:
+                self.window.insstr(line, 0, '[media]')
+                line -= 1
+
             splited = self.split_msg(msg['message'])
-            if not msg['message']:
-                splited = ['[content]']
-            pprint(splited)
             while line >= 0 and len(splited):
                 self.window.insstr(line, 0, splited[-1], self.colors[DRAWMODE.DEFAULT])
                 splited = splited[:-1]
                 line -= 1
+
             if line >= 0:
-                title = msg.get('from_name')
-                if msg.get('from_username') != 'None':
-                    title += ' @' + msg.get('from_username')
+                title_left = str(msg.get('from_name'))
+
+                title_right = str(msg.get('id')) + ' '
+
+                title_right += '['
+                title_right += 'p' if msg.get('photo') else '-'
+                title_right += 'a' if msg.get('audio') else '-'
+                title_right += 'v' if msg.get('video') else '-'
+                title_right += 'V' if msg.get('voice') else '-'
+                title_right += 'f' if msg.get('file') else '-'
+                title_right += 'g' if msg.get('gif') else '-'
+                title_right += 's' if msg.get('sticker') else '-'
+                title_right += '] '
+
+                title_right += self.get_time(msg['date'])
+
+                title = title_left.ljust(self.width)[:-len(title_right)] + title_right
 
                 self.window.insstr(line, 0, str(title), self.colors['author'])
             line -= 2

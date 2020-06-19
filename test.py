@@ -9,9 +9,3 @@ with open('auth.txt', 'r') as f:
     api_hash = f.readline().strip()
 
     TelegramApi(api_id, api_hash)
-
-
-
-with open('debug.txt','w') as f:
-    f.write()
-    f.write('\n')
