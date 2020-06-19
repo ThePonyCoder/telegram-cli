@@ -17,6 +17,7 @@ class TelegramApi:
 
         # support updating
         self.new_data = False
+        self.updated = set()
 
         self.client = TelegramClient('session', api_id, api_hash)
         self.client.start()
@@ -62,11 +63,17 @@ class TelegramApi:
 
     def get_messages(self, id, limit=30, min_id=None, max_id=None):
         # TODO implement min_id, max_id
+        self.first_update(id)
         messages = self.database.get_messages(dialog_id=id, limit=limit, min_id=min_id, max_id=max_id)
         if len(messages) != limit:
             self.que_update_messages(id, limit, min_id, max_id)
         self.new_data = False
         return messages
+
+    def first_update(self, id, limit=100):
+        if id not in self.updated:
+            self.que_update_messages(id, limit=limit)
+            self.updated.add(id)
 
     async def _get_message_name(self, message_obj):
         if message_obj.from_id:
