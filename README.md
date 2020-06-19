@@ -32,7 +32,6 @@ _okay i'm bad in writing text_
 - insert mode
 - show images (in ascii & external viewer)
 - download files
-- archived chats
 - new message highlighting
 - auth mechanism
 - redrawing everything when window resize
