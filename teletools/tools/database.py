@@ -43,11 +43,40 @@ class Database:
         conn.commit()
         conn.close()
 
+    def update_dialog_time(self, messages_obj, dialog_id):
+        bst = 0
+        for message in messages_obj:
+            if message.date:
+                bst = max(bst, message.date.timestamp())
+        conn, cursor = self.connect()
+        time = cursor.execute("""
+            SELECT 
+                date 
+            FROM 
+                dialogs
+            WHERE
+                id=?
+        """, [dialog_id]).fetchall()[0][0]
+        if time < bst:
+            cursor.execute("""
+                UPDATE
+                    dialogs
+                SET
+                    date=?
+                WHERE
+                    id=?
+            """, [bst, dialog_id])
+        conn.commit()
+        conn.close()
+
     def update_messages(self, messages_obj, dialog_id):
         # TODO: change dialog update time
-        conn, cursor = self.connect()
         if not isinstance(messages_obj, list):
             messages_obj = [messages_obj]
+
+        self.update_dialog_time(messages_obj, dialog_id)  # updating dialog update_time
+
+        conn, cursor = self.connect()
 
         for message_obj in messages_obj:
             if not message_obj.from_name:
