@@ -66,6 +66,25 @@ class Messages:
         time_str = time.strftime('%Y-%m-%d %H:%M', time.localtime(timestamp))
         return time_str
 
+    def create_title(self, msg):
+        title_left = str(msg.get('from_name'))
+
+        title_right = str(msg.get('id')) + ' '
+
+        title_right += '['
+        title_right += 'p' if msg.get('photo') else '-'
+        title_right += 'a' if msg.get('audio') else '-'
+        title_right += 'v' if msg.get('video') else '-'
+        title_right += 'V' if msg.get('voice') else '-'
+        title_right += 'f' if msg.get('file') else '-'
+        title_right += 'g' if msg.get('gif') else '-'
+        title_right += 's' if msg.get('sticker') else '-'
+        title_right += '] '
+
+        title_right += self.get_time(msg['date'])
+        title = title_left.ljust(self.width)[:-len(title_right)] + title_right
+        return title
+
     def _draw_messages(self):
         self.window.clear()
         line = self.height - 1
@@ -83,24 +102,7 @@ class Messages:
                 line -= 1
 
             if line >= 0:
-                title_left = str(msg.get('from_name'))
-
-                title_right = str(msg.get('id')) + ' '
-
-                title_right += '['
-                title_right += 'p' if msg.get('photo') else '-'
-                title_right += 'a' if msg.get('audio') else '-'
-                title_right += 'v' if msg.get('video') else '-'
-                title_right += 'V' if msg.get('voice') else '-'
-                title_right += 'f' if msg.get('file') else '-'
-                title_right += 'g' if msg.get('gif') else '-'
-                title_right += 's' if msg.get('sticker') else '-'
-                title_right += '] '
-
-                title_right += self.get_time(msg['date'])
-
-                title = title_left.ljust(self.width)[:-len(title_right)] + title_right
-
+                title = self.create_title(msg)
                 self.window.insstr(line, 0, str(title), self.colors['author'])
             line -= 2
             if line < 0:
