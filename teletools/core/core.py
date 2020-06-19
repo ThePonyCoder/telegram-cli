@@ -56,11 +56,11 @@ class Core:
 
         chats_width, messages_height = self.get_sizes(height, width)
 
-        chats_window = self.main_window.subwin(height - 1, chats_width, 1, 0)
+        chats_window = self.main_window.subwin(height - 2, chats_width, 1, 0)
 
-        messages_window = self.main_window.subwin(messages_height, width - CHATS_MARGIN - chats_width,
+        messages_window = self.main_window.subwin(messages_height, width - CHATS_MARGIN - chats_width - 1,
                                                   1, chats_width + CHATS_MARGIN)
-        writer_window = self.main_window.subwin(height - messages_height - WRITER_MARGIN, width - 1 - chats_width,
+        writer_window = self.main_window.subwin(height - messages_height - WRITER_MARGIN - 1, width - 1 - chats_width,
                                                 messages_height + WRITER_MARGIN, chats_width + 1)
         self.chats = Chats(chats_window)
         self.messages = Messages(messages_window)
@@ -97,6 +97,7 @@ class Core:
         self.messages.set_message_list(messages_list)
 
     def redraw(self):
+        # TODO better redraw without deleting old objects
         self.main_window.clear()
         self.main_window.refresh()
         self.init_windows()
@@ -154,7 +155,7 @@ class Core:
                 self.draw_chats()
                 self.draw_messages()
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(5)
 
     def keyboard_handler(self):
         while True:
@@ -175,16 +176,11 @@ class Core:
             #     self.messages.move_down()
             if ch == ord('q'):
                 self.exit()
-            # if ch == ord('l') and self.mode == MODE.CHATS and self.real_active_id == 0:
-            #     self.change_mode(MODE.ARCHIVED)
-            # if ch == ord('h') and self.mode == MODE.ARCHIVED:
-            #     self.change_mode(MODE.CHATS)
             # if ch == ord('i'):
             #     # insert mode
             #     pass
-            # if ch == ord('r'):
-            #     # reload ui
-            #     self.redraw()
+            if ch == ord('r'):
+                self.redraw()
 
     def exit(self, code=0):
         self.loop.stop()
@@ -204,7 +200,4 @@ class Core:
 
     @staticmethod
     def log(msg):
-        with open('echo.txt', 'w') as f:
-            f.write('\n\n\n')
-            f.write(str(msg))
-            f.write('\n\n\n')
+        pass
