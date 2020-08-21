@@ -2,7 +2,7 @@ import curses
 import curses.textpad
 import threading
 from random import random
-from time import sleep
+import time
 from ..tools.telegram import TelegramApi
 from .chats import Chats
 from .writer import Writer
@@ -13,6 +13,7 @@ from ..classes.modes import DRAWMODE, FOLDER
 import string
 import asyncio
 import types
+from ..tools.database import Database
 
 # sizes of windows
 CHATS_WIDTH = 2
@@ -27,8 +28,9 @@ WRITER_MARGIN = 3
 
 class Core:
     def __init__(self, api_id, api_hash):
-        self.loop = asyncio.get_event_loop()
-        self.telegram_api = TelegramApi(api_id, api_hash, self.loop)
+        # self.loop = asyncio.get_event_loop()
+        # self.telegram_api = TelegramApi(api_id, api_hash, self.loop)
+        self.database = Database()
 
         # curses windows
         self.main_window = None
@@ -36,8 +38,8 @@ class Core:
         self.messages = None
 
         # for updating messages in bckg
-        self.drawn_active_id = None
-        self.messages_processing = False
+        # self.drawn_active_id = None
+        # self.messages_processing = False
         # self.exit = False
 
         self.mode = MODE.CHATS
@@ -66,34 +68,57 @@ class Core:
         self.messages = Messages(messages_window)
 
     def draw_chats(self, reset_active=False):
-        chat_list = self.telegram_api.get_dialogs(False if self.folder == FOLDER.DEFAULT else True)
+        # chat_list = self.telegram_api.get_dialogs(False if self.folder == FOLDER.DEFAULT else True)
+        self.update_dialogs()
+        chat_list = self.database.get_dialogs()
+
+        def _get_chat_flags(chat):
+            """Make flags for chat"""
+            status = ''
+            status += 'p' if chat['pinned'] else '-'
+            if chat['is_user']:
+                status += 'u'
+            elif chat['is_channel']:
+                status += 'c'
+            elif chat['is_group']:
+                status += 'g'
+            else:
+                status += '-'
+            return status
+
+        reduced_chat_list = [{
+            'name': i['name'],
+            'id': i['id'],
+            'flags': _get_chat_flags(i)
+        } for i in chat_list]
+
         if self.folder == FOLDER.DEFAULT:
-            chat_list.insert(0, {'name': 'Archived chats',
-                                 'id': 0,
-                                 'is_user': 0,
-                                 'is_group': 0,
-                                 'is_channel': 0,
-                                 'pinned': 0})  # This is archive folder!
-        self.chats.set_chat_list(chat_list)
+            reduced_chat_list.insert(0, {'name': 'Archived chats',
+                                         'id': 0,
+                                         'flags': '-f'
+                                         })  # This is archive folder!
+        self.chats.set_chat_list(reduced_chat_list)
 
     def go_inside(self):
-        if self.folder == FOLDER.DEFAULT and self.active_id == 0:
+        pass
+        if self.folder == FOLDER.DEFAULT and self.chats.get_active_chat_id() == 0:
             self.folder = FOLDER.ARHIVED
             self.draw_chats()
             self.draw_messages()
 
     def go_outside(self):
+        pass
         if self.folder == FOLDER.ARHIVED:
             self.folder = FOLDER.DEFAULT
             self.draw_chats()
             self.draw_messages()
 
     def draw_messages(self):
-        if self.active_id == 0:  # checking archive folder
+        if self.chats.get_active_chat_id() == 0:  # checking archive folder
             self.messages.clear()
             return
-        messages_list = self.telegram_api.get_messages(self.active_id)
-        self.log(self.active_id)
+        messages_list = self.database.get_messages(self.chats.get_active_chat_id())
+        self.log(self.chats.get_active_chat_id())
         self.messages.set_message_list(messages_list)
 
     def redraw(self):
@@ -131,7 +156,7 @@ class Core:
             DRAWMODE.SELECTED: curses.color_pair(DRAWMODE_SELECTED)
         }
 
-        self.chats.init_colors(COLORS)
+        self.chats.set_colors(COLORS)
         self.messages.init_colors(COLORS)
 
     @staticmethod
@@ -145,59 +170,42 @@ class Core:
         messages_height = int(height / (WRITER_HEIGHT + MESSAGES_HEIGHT) * MESSAGES_HEIGHT)
         return chats_width, messages_height
 
-    @property
-    def active_id(self):
-        return self.chats.active_id
-
-    async def updates_handler(self):
+    def loop(self):
         while True:
-            if self.telegram_api.new_data:
-                self.draw_chats()
-                self.draw_messages()
-
-            await asyncio.sleep(5)
-
-    def keyboard_handler(self):
-        while True:
-            ch = self.main_window.getch()
-            if ch == ord('j'):
+            ch = self.main_window.getkey()
+            if ch == 'j':
                 self.chats.move_down()
                 self.draw_messages()
-            if ch == ord('k'):
+            if ch == 'k':
                 self.chats.move_up()
                 self.draw_messages()
-            if ch == ord('l'):
-                self.go_inside()
-            if ch == ord('h'):
-                self.go_outside()
-            # if ch == ord('K'):
-            #     self.messages.move_up()
-            # if ch == ord('J'):
-            #     self.messages.move_down()
-            if ch == ord('q'):
+            # if ch == ord('l'):
+            #     self.go_inside()
+            # if ch == ord('h'):
+            # self.go_outside()
+            if ch == 'q':
                 self.exit()
             # if ch == ord('i'):
             #     # insert mode
             #     pass
-            if ch == ord('r'):
+            if ch == 'r':
                 self.redraw()
+            # time.sleep(0.2)
 
     def exit(self, code=0):
-        self.loop.stop()
         self.main_window.clear()
         self.main_window.refresh()
         exit(code)
 
     def run(self):
-        # self.loop.create_task(self.draw_chats())
         self.draw_chats()
         self.draw_messages()
-        self.loop.create_task(self.updates_handler())
 
-        threading.Thread(target=self.keyboard_handler).start()
-
-        self.loop.run_forever()
+        self.loop()
 
     @staticmethod
     def log(msg):
+        print(msg)
+
+    def update_dialogs(self):
         pass
