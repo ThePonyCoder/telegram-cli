@@ -70,7 +70,7 @@ class Database:
         conn.close()
 
     def update_messages(self, messages_obj, dialog_id):
-        # TODO: change dialog update time
+        # TODO: change dialog update.py time
         if not isinstance(messages_obj, list):
             messages_obj = [messages_obj]
 

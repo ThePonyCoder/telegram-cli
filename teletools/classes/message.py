@@ -17,7 +17,6 @@ class Message:
         self.chat = chat
         self.mode = DRAWMODE.DEFAULT
 
-
     @property
     def id(self):
         return self.message.id

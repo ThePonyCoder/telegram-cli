@@ -2,11 +2,11 @@ import curses
 import curses.textpad
 import queue
 import threading
-import time
+
 from .chats import Chats
 from .messages import Messages
-from ..classes.modes import MODE
 from ..classes.modes import DRAWMODE, FOLDER
+from ..classes.modes import MODE
 from ..tools.database import Database
 
 # sizes of windows
@@ -157,7 +157,7 @@ class Core:
         curses.init_pair(DRAWMODE_DEFAULT, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(DRAWMODE_SELECTED, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
-        COLORS = {
+        COLORS = {  # TODO: make normal colors defenitions
             'active': curses.color_pair(ACTIVE_CHAT),
             'inactive': curses.color_pair(INACTIVE_CHAT),
             'alert': curses.color_pair(ALERT),
