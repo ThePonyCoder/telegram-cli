@@ -1,18 +1,12 @@
 import curses
 import curses.textpad
+import queue
 import threading
-from random import random
 import time
-from ..tools.telegram import TelegramApi
 from .chats import Chats
-from .writer import Writer
 from .messages import Messages
 from ..classes.modes import MODE
-from ..classes.chat import Chat
 from ..classes.modes import DRAWMODE, FOLDER
-import string
-import asyncio
-import types
 from ..tools.database import Database
 
 # sizes of windows
@@ -27,9 +21,7 @@ WRITER_MARGIN = 3
 
 
 class Core:
-    def __init__(self, api_id, api_hash):
-        # self.loop = asyncio.get_event_loop()
-        # self.telegram_api = TelegramApi(api_id, api_hash, self.loop)
+    def __init__(self, new_data_event: threading.Event, update_queue: queue.Queue):
         self.database = Database()
 
         # curses windows
@@ -37,13 +29,12 @@ class Core:
         self.chats = None
         self.messages = None
 
-        # for updating messages in bckg
-        # self.drawn_active_id = None
-        # self.messages_processing = False
-        # self.exit = False
-
         self.mode = MODE.CHATS
         self.folder = FOLDER.DEFAULT
+
+        # synchronisation between threads
+        self.new_data_event = new_data_event
+        self.update_queue = update_queue
 
         self.init_windows()
         self.init_colors()
@@ -67,8 +58,7 @@ class Core:
         self.chats = Chats(chats_window)
         self.messages = Messages(messages_window)
 
-    def draw_chats(self, reset_active=False):
-        # chat_list = self.telegram_api.get_dialogs(False if self.folder == FOLDER.DEFAULT else True)
+    def draw_chats(self):
         self.update_dialogs()
         chat_list = self.database.get_dialogs()
 
@@ -117,6 +107,7 @@ class Core:
         if self.chats.get_active_chat_id() == 0:  # checking archive folder
             self.messages.clear()
             return
+        self.update_messages(self.chats.get_active_chat_id())
         messages_list = self.database.get_messages(self.chats.get_active_chat_id())
 
         def _get_flags(msg):
@@ -210,6 +201,11 @@ class Core:
             if ch == 'r':
                 self.redraw()
             # time.sleep(0.2)
+            if self.new_data_event.wait(timeout=0.1):
+                print('SET')
+                self.new_data_event.clear()
+            else:
+                print('UNSET')
 
     def exit(self, code=0):
         self.main_window.clear()
@@ -224,7 +220,12 @@ class Core:
 
     @staticmethod
     def log(msg):
-        print(msg)
+        print(msg, flush=True)
 
     def update_dialogs(self):
+        # TODO: push event to self.update_queue
+        pass
+
+    def update_messages(self, id, from_id=None, to_id=None):
+        # TODO: push event to self.update_queue
         pass
