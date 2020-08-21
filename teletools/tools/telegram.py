@@ -1,7 +1,8 @@
 import asyncio
 import queue
-import time
 import threading
+import time
+
 
 from telethon import TelegramClient, events
 
@@ -45,8 +46,9 @@ class TelegramApi:
     async def _updates_handler(self):
         """Main loop function"""
         while True:
+            print('making updates')
             if not self.update_queue.empty():
-                update = self.update_queue.get_nowait()
+                update = self.update_queue.get()
                 if update.type == UpdateType.DIALOGUES_UPDATE and \
                         (time.time() - self.last_update.get('dialogs', 0)) > 4:
                     # TODO: make setting for timeout
@@ -56,7 +58,8 @@ class TelegramApi:
                         (time.time() - self.last_update.get(update.dialog_id, 0)) > 4:
                     self.loop.create_task(self._update_messages(id=update.dialog_id))
             else:
-                await asyncio.sleep(2)
+                await asyncio.sleep(4)
+            # await asyncio.sleep(0.1)
 
     async def _update_dialogs(self):
         dialogs = await self.client.get_dialogs()

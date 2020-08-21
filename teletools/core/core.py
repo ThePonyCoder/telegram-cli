@@ -8,6 +8,7 @@ from .messages import Messages
 from ..classes.modes import DRAWMODE, FOLDER
 from ..classes.modes import MODE
 from ..tools.database import Database
+from ..classes.update import Update, UpdateType
 
 # sizes of windows
 CHATS_WIDTH = 2
@@ -195,22 +196,21 @@ class Core:
             # self.go_outside()
             if ch == 'q':
                 self.exit()
+                return
             # if ch == ord('i'):
             #     # insert mode
             #     pass
             if ch == 'r':
                 self.redraw()
             # time.sleep(0.2)
-            if self.new_data_event.wait(timeout=0.1):
-                print('SET')
+            if self.new_data_event.is_set():
+                self.draw_chats()
+                self.draw_messages()
                 self.new_data_event.clear()
-            else:
-                print('UNSET')
 
     def exit(self, code=0):
         self.main_window.clear()
         self.main_window.refresh()
-        exit(code)
 
     def run(self):
         self.draw_chats()
@@ -224,8 +224,11 @@ class Core:
 
     def update_dialogs(self):
         # TODO: push event to self.update_queue
-        pass
+        event = Update(UpdateType.DIALOGUES_UPDATE)
+        self.update_queue.put_nowait(event)
 
     def update_messages(self, id, from_id=None, to_id=None):
         # TODO: push event to self.update_queue
-        pass
+        event = Update(UpdateType.MESSAGES_UPDATE, dialog_id=id)
+        self.update_queue.put_nowait(event)
+        print(self.update_queue.qsize())
