@@ -50,15 +50,15 @@ class TelegramApi:
             if not self.update_queue.empty():
                 update = self.update_queue.get()
                 if update.type == UpdateType.DIALOGUES_UPDATE and \
-                        (time.time() - self.last_update.get('dialogs', 0)) > 4:
+                        (time.time() - self.last_update.get('dialogs', 0)) > 120:
                     # TODO: make setting for timeout
                     self.loop.create_task(self._update_dialogs())
                     self.last_update['dialogs'] = time.time()
                 if update.type == UpdateType.MESSAGES_UPDATE and \
-                        (time.time() - self.last_update.get(update.dialog_id, 0)) > 4:
+                        (time.time() - self.last_update.get(update.dialog_id, 0)) > 120:
                     self.loop.create_task(self._update_messages(id=update.dialog_id))
             else:
-                await asyncio.sleep(4)
+                await asyncio.sleep(5)
             # await asyncio.sleep(0.1)
 
     async def _update_dialogs(self):

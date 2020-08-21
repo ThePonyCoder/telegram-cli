@@ -59,8 +59,9 @@ class Core:
         self.chats = Chats(chats_window)
         self.messages = Messages(messages_window)
 
-    def draw_chats(self):
-        self.update_dialogs()
+    def draw_chats(self, noupdate=False):
+        if not noupdate:
+            self.update_dialogs()
         chat_list = self.database.get_dialogs()
 
         def _get_chat_flags(chat):
@@ -104,11 +105,12 @@ class Core:
             self.draw_chats()
             self.draw_messages()
 
-    def draw_messages(self):
+    def draw_messages(self, noupdate=False):
         if self.chats.get_active_chat_id() == 0:  # checking archive folder
             self.messages.clear()
             return
-        self.update_messages(self.chats.get_active_chat_id())
+        if not noupdate:
+            self.update_messages(self.chats.get_active_chat_id())
         messages_list = self.database.get_messages(self.chats.get_active_chat_id())
 
         def _get_flags(msg):
@@ -181,31 +183,33 @@ class Core:
         messages_height = int(height / (WRITER_HEIGHT + MESSAGES_HEIGHT) * MESSAGES_HEIGHT)
         return chats_width, messages_height
 
+    def key_handler(self, key):
+        if key == 'j':
+            self.chats.move_down()
+            self.draw_messages()
+        if key == 'k':
+            self.chats.move_up()
+            self.draw_messages()
+
+        if key == 'q':
+            self.exit()
+            return
+        # if key == ord('i'):
+        #     # insert mode
+        #     pass
+        if key == 'R':
+            self.redraw()
+        # time.sleep(0.2)
+
     def loop(self):
         while True:
             ch = self.main_window.getkey()
-            if ch == 'j':
-                self.chats.move_down()
-                self.draw_messages()
-            if ch == 'k':
-                self.chats.move_up()
-                self.draw_messages()
-            # if ch == ord('l'):
-            #     self.go_inside()
-            # if ch == ord('h'):
-            # self.go_outside()
-            if ch == 'q':
-                self.exit()
-                return
-            # if ch == ord('i'):
-            #     # insert mode
-            #     pass
-            if ch == 'r':
-                self.redraw()
-            # time.sleep(0.2)
+            # print(ch)
+            self.key_handler(ch)
+
             if self.new_data_event.is_set():
-                self.draw_chats()
-                self.draw_messages()
+                self.draw_chats(noupdate=True)
+                self.draw_messages(noupdate=True)
                 self.new_data_event.clear()
 
     def exit(self, code=0):
