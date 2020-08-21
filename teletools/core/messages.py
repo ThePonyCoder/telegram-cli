@@ -15,73 +15,40 @@ class Messages:
         self.drown_number = 0  # number of messages that are drown on the screen
 
     def set_message_list(self, message_list):
-        """message_list - list of Message from classes.message"""
+        """message_list = {
+            id: mustbe,
+            title: mustbe,
+            flags: mustbe,
+            data: mustbe,
+            text: ~,
+            date: ~,
+        }
+        """
         self.message_list = message_list
-        # self._update_active_msg()
         self.shift = 0
         self._draw_messages()
 
-    # def _update_active_msg(self):
-    #     """This function helps to keep active msg when updating message list"""
-    #
-    #     for i in self.message_list:
-    #         if self.active_msg is None and i.mode == DRAWMODE.SELECTED:
-    #             i.mode  = DRAWMODE.DEFAULT
-    #         if self.active_msg is None:
-    #             continue
-    #         elif i.message == self.active_msg.message:
-    #             i.mode = DRAWMODE.SELECTED
-    #         elif i.mode == DRAWMODE.SELECTED:
-    #             i.mode = DRAWMODE.DEFAULT
-
-    # def move_up(self):
-    #     if self.active_msg is None:
-    #         self.active_msg = self.message_list[0]
-    #     if self.shift < self.message_list.__len__():
-    #         self.shift += 1
-    #
-    #     if self.active_msg_index < (len(self.message_list) - 1):
-    #         self.active_msg = self.message_list[self.active_msg_index + 1]
-    #         self._update_active_msg()
-    #     self._draw_messages()
-
-    # def move_down(self):
-    #     if self.active_msg is None:
-    #         return
-    #     if self.shift > 0:
-    #         self.shift -= 1
-    #     if self.active_msg_index > 0:
-    #         self.active_msg = self.message_list[self.active_msg_index - 1]
-    #         self._update_active_msg()
-    #     else:
-    #         self.active_msg = None
-    #     self._draw_messages()
-
-    @property
-    def active_msg_index(self):
-        return self.message_list.index(self.active_msg)
-
     @staticmethod
-    def get_time(timestamp):
+    def _get_time(timestamp):
         time_str = time.strftime('%Y-%m-%d %H:%M', time.localtime(timestamp))
         return time_str
 
-    def create_title(self, msg):
-        title_left = str(msg.get('from_name'))
+    def _create_title(self, msg):
+        """
+        msg = {
+            id: mustbe,
+            title: mustbe,
+            flags: mustbe,
+            data: mustbe,
+        }
+        """
+        title_left = str(msg.get('title'))
 
         title_right = str(msg.get('id')) + ' '
 
-        title_right += '['
-        title_right += 'p' if msg.get('photo') else '-'
-        title_right += 'a' if msg.get('audio') else '-'
-        title_right += 'v' if msg.get('video') else '-'
-        title_right += 'V' if msg.get('voice') else '-'
-        title_right += 'f' if msg.get('file') else '-'
-        title_right += 'g' if msg.get('gif') else '-'
-        title_right += 's' if msg.get('sticker') else '-'
-        title_right += '] '
+        title_right += '[' + msg.get('flags') + '] '
 
-        title_right += self.get_time(msg['date'])
+        title_right += self._get_time(msg['date'])
         title = title_left.ljust(self.width)[:-len(title_right)] + title_right
         return title
 
@@ -91,19 +58,20 @@ class Messages:
         self.drown_number = 0
         for msg in self.message_list[self.shift:]:
 
-            if msg['media'] and line >= 0:
+            if msg.get('media') and line >= 0:
                 self.window.insstr(line, 0, '[media]')
                 line -= 1
 
-            splited = self.split_msg(msg['message'])
-            while line >= 0 and len(splited):
-                self.window.insstr(line, 0, splited[-1], self.colors[DRAWMODE.DEFAULT])
-                splited = splited[:-1]
-                line -= 1
+            if msg.get('text'):
+                splited = self._split_msg(msg.get('text'))
+                while line >= 0 and len(splited):
+                    self.window.insstr(line, 0, splited[-1], self.colors[DRAWMODE.DEFAULT])
+                    splited = splited[:-1]
+                    line -= 1
 
-            if line >= 0:
-                title = self.create_title(msg)
-                self.window.insstr(line, 0, str(title), self.colors['author'])
+                if line >= 0:
+                    title = self._create_title(msg)
+                    self.window.insstr(line, 0, str(title), self.colors['author'])
             line -= 2
             if line < 0:
                 break
@@ -111,7 +79,7 @@ class Messages:
 
         self.window.refresh()
 
-    def split_msg(self, text):
+    def _split_msg(self, text):
         if not isinstance(text, str):
             return ''
         text = text.strip()
@@ -157,3 +125,39 @@ class Messages:
     def clear(self):
         self.window.clear()
         self.window.refresh()
+
+    # def _update_active_msg(self):
+    #     """This function helps to keep active msg when updating message list"""
+    #
+    #     for i in self.message_list:
+    #         if self.active_msg is None and i.mode == DRAWMODE.SELECTED:
+    #             i.mode  = DRAWMODE.DEFAULT
+    #         if self.active_msg is None:
+    #             continue
+    #         elif i.message == self.active_msg.message:
+    #             i.mode = DRAWMODE.SELECTED
+    #         elif i.mode == DRAWMODE.SELECTED:
+    #             i.mode = DRAWMODE.DEFAULT
+
+    # def move_up(self):
+    #     if self.active_msg is None:
+    #         self.active_msg = self.message_list[0]
+    #     if self.shift < self.message_list.__len__():
+    #         self.shift += 1
+    #
+    #     if self.active_msg_index < (len(self.message_list) - 1):
+    #         self.active_msg = self.message_list[self.active_msg_index + 1]
+    #         self._update_active_msg()
+    #     self._draw_messages()
+
+    # def move_down(self):
+    #     if self.active_msg is None:
+    #         return
+    #     if self.shift > 0:
+    #         self.shift -= 1
+    #     if self.active_msg_index > 0:
+    #         self.active_msg = self.message_list[self.active_msg_index - 1]
+    #         self._update_active_msg()
+    #     else:
+    #         self.active_msg = None
+    #     self._draw_messages()

@@ -118,8 +118,26 @@ class Core:
             self.messages.clear()
             return
         messages_list = self.database.get_messages(self.chats.get_active_chat_id())
-        self.log(self.chats.get_active_chat_id())
-        self.messages.set_message_list(messages_list)
+
+        def _get_flags(msg):
+            flags = ''
+            flags += 'p' if msg.get('photo') else '-'
+            flags += 'a' if msg.get('audio') else '-'
+            flags += 'v' if msg.get('video') else '-'
+            flags += 'V' if msg.get('voice') else '-'
+            flags += 'f' if msg.get('file') else '-'
+            flags += 'g' if msg.get('gif') else '-'
+            flags += 's' if msg.get('sticker') else '-'
+            return flags
+
+        reduced_message_list = [{
+            'title': '@' + str(self.database.get_user_name(i['from_id'])[0]),
+            'id': i['id'],
+            'flags': _get_flags(i),
+            'text': i['message'],
+            'date': i['date']
+        } for i in messages_list]
+        self.messages.set_message_list(reduced_message_list)
 
     def redraw(self):
         # TODO better redraw without deleting old objects
