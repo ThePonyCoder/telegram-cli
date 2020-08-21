@@ -131,11 +131,12 @@ class Core:
             return flags
 
         reduced_message_list = [{
-            'title': '@' + str(self.database.get_user_name(i['from_id'])[0]),
+            'title': str(self.database.get_user_name(i['from_id'])[1]),
             'id': i['id'],
             'flags': _get_flags(i),
             'text': i['message'],
-            'date': i['date']
+            'date': i['date'],
+            'media': i['media']
         } for i in messages_list]
         self.messages.set_message_list(reduced_message_list)
 

@@ -69,9 +69,9 @@ class Messages:
                     splited = splited[:-1]
                     line -= 1
 
-                if line >= 0:
-                    title = self._create_title(msg)
-                    self.window.insstr(line, 0, str(title), self.colors['author'])
+            if line >= 0:
+                title = self._create_title(msg)
+                self.window.insstr(line, 0, str(title), self.colors['author'])
             line -= 2
             if line < 0:
                 break
