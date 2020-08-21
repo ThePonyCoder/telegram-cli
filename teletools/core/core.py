@@ -1,3 +1,4 @@
+import string
 import curses
 import curses.textpad
 import queue
@@ -36,6 +37,9 @@ class Core:
         # synchronisation between threads
         self.new_data_event = new_data_event
         self.update_queue = update_queue
+
+        # Digits
+        self.number_kit = ''  # TODO: better name
 
         self.init_windows()
         self.init_colors()
@@ -184,22 +188,29 @@ class Core:
         return chats_width, messages_height
 
     def key_handler(self, key):
+        if key in string.digits:
+            self.number_kit += key
+            # TODO: drawn number status
+        print(self.number_kit)
         if key == 'j':
-            self.chats.move_down()
+            self.chats.move_down(int(self.number_kit) if self.number_kit else 1)
             self.draw_messages()
         if key == 'k':
-            self.chats.move_up()
+            self.chats.move_up(int(self.number_kit) if self.number_kit else 1)
             self.draw_messages()
 
         if key == 'q':
             self.exit()
             return
+
         # if key == ord('i'):
         #     # insert mode
         #     pass
         if key == 'R':
             self.redraw()
         # time.sleep(0.2)
+        if key not in string.digits:
+            self.number_kit = ''
 
     def loop(self):
         while True:

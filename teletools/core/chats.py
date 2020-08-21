@@ -35,18 +35,14 @@ class Chats:
         self._chat_list = chat_list
         self._draw_chats()
 
-    def move_up(self):
+    def move_up(self, count=1):
         active_chat_pos = self._get_active_chat_pos()
-        if active_chat_pos == 0:
-            return
-        self._active_chat_id = self._chat_list[active_chat_pos - 1]['id']
+        self._active_chat_id = self._chat_list[max(0, active_chat_pos - count)]['id']
         self._draw_chats()
 
-    def move_down(self):
+    def move_down(self, count=1):
         active_chat_pos = self._get_active_chat_pos()
-        if active_chat_pos == len(self._chat_list) - 1:
-            return
-        self._active_chat_id = self._chat_list[active_chat_pos + 1]['id']
+        self._active_chat_id = self._chat_list[min(active_chat_pos + count, len(self._chat_list) - 1)]['id']
         self._draw_chats()
 
     def set_colors(self, colors):
