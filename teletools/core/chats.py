@@ -1,5 +1,3 @@
-from math import trunc
-from time import sleep
 import curses
 
 

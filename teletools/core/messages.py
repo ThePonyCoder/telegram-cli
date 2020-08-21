@@ -111,7 +111,7 @@ class Messages:
     def width(self):
         return self.window.getmaxyx()[1]
 
-    def init_colors(self, colors):
+    def set_colors(self, colors):
         """
         colors example:
             {

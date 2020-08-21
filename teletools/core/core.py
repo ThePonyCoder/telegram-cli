@@ -176,7 +176,7 @@ class Core:
         }
 
         self.chats.set_colors(COLORS)
-        self.messages.init_colors(COLORS)
+        self.messages.set_colors(COLORS)
 
     @staticmethod
     def get_sizes(height, width):
