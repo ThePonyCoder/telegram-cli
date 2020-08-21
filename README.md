@@ -28,12 +28,4 @@ Than clone the repo and run in shell
 
 _okay i'm bad in writing text_
 ## TODO
-- message reply
-- insert mode
-- show images (in ascii & external viewer)
-- download files
-- new message highlighting
-- auth mechanism
-- redrawing everything when window resize
-- search messages/chats
-- scrolling
+**You can track developing progress [here](https://app.gitkraken.com/glo/board/X0Ae8iQxbQAR5255)**
