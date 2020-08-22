@@ -133,6 +133,7 @@ class TelegramApi:
     async def _download_media(self, dialog_id, message_id):
         message = await self.client.get_messages(dialog_id, ids=message_id)
         file = message.file
+        print(file.mime_type)
         if file is None:
             print(f'No media in message [id: {message_id}]')
             return
@@ -141,5 +142,6 @@ class TelegramApi:
         if not os.path.isfile(filename):
             await message.download_media(filename, progress_callback=print)
 
-        # TODO: message opening by mime_type
-        #  https://docs.telethon.dev/en/latest/modules/custom.html#telethon.tl.custom.file.File
+        if file.mime_type.startswith('image'):
+            os.system(f'sxiv {filename}')
+        # TODO: support more mime types + setting for default image viewers
