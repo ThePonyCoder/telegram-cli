@@ -41,7 +41,7 @@ class Core:
         self.update_queue = update_queue
 
         # Digits
-        self.number_kit = ''  # TODO: better name
+        self.char_query = ''  # TODO: better name
 
         self.init_windows()
         self.init_colors()
@@ -201,18 +201,18 @@ class Core:
             self.update_query(key)
 
         if key == 'j':
-            self.chats.move_down(int(self.number_kit) if self.number_kit else 1)
+            self.chats.move_down(int(self.char_query) if self.char_query else 1)
             self.draw_messages()
         if key == 'k':
-            self.chats.move_up(int(self.number_kit) if self.number_kit else 1)
+            self.chats.move_up(int(self.char_query) if self.char_query else 1)
             self.draw_messages()
 
         if key == 'q':
             self.exit()
             return
 
-        if key == 'o' and self.number_kit != '':
-            self.download_media(self.__get_active_id(), int(self.number_kit))
+        if key == 'o' and self.char_query != '':
+            self.download_media(self.__get_active_id(), int(self.char_query))
 
         if key == 'R':
             self.redraw()
@@ -222,11 +222,10 @@ class Core:
 
     def update_query(self, char=None):
         if char is None:
-            self.number_kit = ''
+            self.char_query = ''
         else:
-            self.number_kit += char
-        print('pizda')
-        self.status.set_number_kit(self.number_kit)
+            self.char_query += char
+        self.status.set_char_query(self.char_query)
 
     def loop(self):
         while True:

@@ -9,13 +9,13 @@ class Status:
     def __init__(self, window):
         self._window = window  # curses.window
         self._colors = None  # color palette
-        self._number_kit = ''
+        self._char_query = ''
         self._new_messages_counter = 0
         self._mode = 'DIALOGS'
         self._dialog_name = 'None'
 
-    def set_number_kit(self, number_kit):
-        self._number_kit = number_kit
+    def set_char_query(self, char_query):
+        self._char_query = char_query
         self._update()
 
     def set_mode(self, mode):
@@ -31,11 +31,12 @@ class Status:
         self._update()
 
     def _update(self):
+        # TODO: partial updates to save performance
         self._window.clear()
         modestr = f' {self._mode} '
         dialogstr = f' {self._dialog_name} '
         newmsgstr = f' [{self._new_messages_counter}] '
-        numberkitstr = f' {self._number_kit} '
+        numberkitstr = f' {self._char_query} '
 
         curses.init_color(123, 686, 843, 529)
 
