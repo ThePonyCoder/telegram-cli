@@ -10,6 +10,7 @@ from ..classes.modes import DRAWMODE, FOLDER
 from ..classes.modes import MODE
 from ..tools.database import Database
 from ..classes.update import Update, UpdateType
+from .statusline import Status
 
 # sizes of windows
 CHATS_WIDTH = 2
@@ -30,6 +31,7 @@ class Core:
         self.main_window = None
         self.chats = None
         self.messages = None
+        self.status = None
 
         self.mode = MODE.CHATS
         self.folder = FOLDER.DEFAULT
@@ -60,8 +62,11 @@ class Core:
                                                   1, chats_width + CHATS_MARGIN)
         writer_window = self.main_window.subwin(height - messages_height - WRITER_MARGIN - 1, width - 1 - chats_width,
                                                 messages_height + WRITER_MARGIN, chats_width + 1)
+        status_window = self.main_window.subwin(1, width, height - 1, 0)
+
         self.chats = Chats(chats_window)
         self.messages = Messages(messages_window)
+        self.status = Status(status_window)
 
     def draw_chats(self, noupdate=False):
         if not noupdate:
@@ -178,6 +183,7 @@ class Core:
 
         self.chats.set_colors(COLORS)
         self.messages.set_colors(COLORS)
+        self.status.set_colors(COLORS)
 
     @staticmethod
     def get_sizes(height, width):
@@ -192,9 +198,8 @@ class Core:
 
     def key_handler(self, key):
         if key in string.digits:
-            self.number_kit += key
-            # TODO: draw number status
-        print(self.number_kit)
+            self.update_query(key)
+
         if key == 'j':
             self.chats.move_down(int(self.number_kit) if self.number_kit else 1)
             self.draw_messages()
@@ -213,7 +218,15 @@ class Core:
             self.redraw()
 
         if key not in string.digits:
+            self.update_query()
+
+    def update_query(self, char=None):
+        if char is None:
             self.number_kit = ''
+        else:
+            self.number_kit += char
+        print('pizda')
+        self.status.set_number_kit(self.number_kit)
 
     def loop(self):
         while True:
@@ -233,6 +246,7 @@ class Core:
     def run(self):
         self.draw_chats()
         self.draw_messages()
+        self.status._update()
 
         self.loop()
 

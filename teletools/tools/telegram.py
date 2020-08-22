@@ -9,6 +9,7 @@ from telethon import TelegramClient, events
 from .database import Database
 from ..classes.update import UpdateType
 
+AUTODOWNLOAD_PHOTOS = False
 
 class TelegramApi:
     def __init__(self, api_id, api_hash, new_data_event: threading.Event, update_queue: queue.Queue):
@@ -79,7 +80,7 @@ class TelegramApi:
 
         for message in messages:
             message.from_username, message.from_name = await self.__get_message_name(message)
-
+        
         self.database.update_messages(messages, id)
         self.new_data_event.set()
 
@@ -130,7 +131,7 @@ class TelegramApi:
         self.database.update_dialogs(dialog)
         self.new_data_event.set()
 
-    async def _download_media(self, dialog_id, message_id):
+    async def _download_media(self, dialog_id, message_id, auto_open=True):
         message = await self.client.get_messages(dialog_id, ids=message_id)
         file = message.file
         print(file.mime_type)
@@ -141,7 +142,7 @@ class TelegramApi:
         filename = f'files/{dialog_id}_{message_id}{file.ext}'  # TODO: make settings for download folder
         if not os.path.isfile(filename):
             await message.download_media(filename, progress_callback=print)
-
-        if file.mime_type.startswith('image'):
-            os.system(f'sxiv {filename}')
+        if auto_open:
+            if file.mime_type.startswith('image'):
+                os.system(f'sxiv {filename}')
         # TODO: support more mime types + setting for default image viewers
