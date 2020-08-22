@@ -3,6 +3,7 @@ import curses
 import curses.textpad
 import queue
 import threading
+import time
 
 from .chats import Chats
 from .messages import Messages
@@ -46,15 +47,17 @@ class Core:
         self.init_windows()
         self.init_colors()
 
-    #     threading.Thread(target=self.windows_updater).start()
-    #
-    # def windows_updater(self):
-    #     while True:
-    #         self.messages.refresh()
-    #         self.chats.refresh()
-    #         self.status.refresh()
-    #         import time
-    #         time.sleep(0.5)
+        threading.Thread(target=self.continuous_updates).start()
+
+    def continuous_updates(self):
+        while True:
+            self.main_window.refresh()
+            print(self.new_data_event.is_set())
+            if self.new_data_event.is_set():
+                self.draw_chats(noupdate=True)
+                self.draw_messages(noupdate=True)
+                self.new_data_event.clear()
+            time.sleep(1)
 
     def init_windows(self):
         self.main_window = curses.initscr()
@@ -245,11 +248,6 @@ class Core:
             ch = self.main_window.getkey()
             print(ch)
             self.key_handler(ch)
-
-            if self.new_data_event.is_set():
-                self.draw_chats(noupdate=True)
-                self.draw_messages(noupdate=True)
-                self.new_data_event.clear()
 
     def exit(self, code=0):
         self.main_window.clear()

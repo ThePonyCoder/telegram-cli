@@ -11,6 +11,7 @@ from ..classes.update import UpdateType
 
 AUTODOWNLOAD_PHOTOS = False
 
+
 class TelegramApi:
     def __init__(self, api_id, api_hash, new_data_event: threading.Event, update_queue: queue.Queue):
         self.loop = asyncio.get_event_loop()  # asyncio loop
@@ -31,7 +32,7 @@ class TelegramApi:
         self.client.on(events.MessageRead())(self._read_message_handler)
 
         # updating data before start
-        self.loop.create_task(self.client.catch_up())
+        # self.loop.create_task(self.client.catch_up())
         self.loop.create_task(self._update_dialogs())
 
         # starting real time updates
@@ -80,7 +81,7 @@ class TelegramApi:
 
         for message in messages:
             message.from_username, message.from_name = await self.__get_message_name(message)
-        
+
         self.database.update_messages(messages, id)
         self.new_data_event.set()
 
@@ -102,12 +103,12 @@ class TelegramApi:
 
     async def _new_message_handler(self, event):
         message = event.message
+
         dialog = await event.get_chat()
 
         message.from_username, message.from_name = await self.__get_message_name(message)
-
         self.database.update_messages(message, dialog.id)
-        self.database.update_dialogs(dialog)
+
         self.new_data_event.set()
 
     async def _edit_message_handler(self, event):
@@ -117,10 +118,10 @@ class TelegramApi:
         message.from_username, message.from_name = await self.__get_message_name(message)
 
         self.database.update_messages(message, dialog.id)
-        self.database.update_dialogs(dialog)
         self.new_data_event.set()
 
     async def _read_message_handler(self, event):
+        pass
         messages = await event.get_messages()
         dialog = await event.get_chat()
 
@@ -128,7 +129,6 @@ class TelegramApi:
             message.from_username, message.from_name = await self.__get_message_name(message)
 
         self.database.update_messages(messages, dialog.id)
-        self.database.update_dialogs(dialog)
         self.new_data_event.set()
 
     async def _download_media(self, dialog_id, message_id, auto_open=True):
