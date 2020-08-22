@@ -59,6 +59,10 @@ class Chats:
     def get_active_chat_id(self):
         return self._active_chat_id
 
+    def set_active_chat_id(self, id):
+        self._active_chat_id = id
+        self._draw_chats()
+
     def _update_viewrange(self):
         if self._active_chat_id not in [i['id'] for i in self._chat_list]:
             self._active_chat_id = self._chat_list[0]['id']

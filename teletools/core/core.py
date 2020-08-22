@@ -40,11 +40,21 @@ class Core:
         self.new_data_event = new_data_event
         self.update_queue = update_queue
 
-        # Digits
-        self.char_query = ''  # TODO: better name
+        # many actions at a time
+        self.char_query = ''
 
         self.init_windows()
         self.init_colors()
+
+    #     threading.Thread(target=self.windows_updater).start()
+    #
+    # def windows_updater(self):
+    #     while True:
+    #         self.messages.refresh()
+    #         self.chats.refresh()
+    #         self.status.refresh()
+    #         import time
+    #         time.sleep(0.5)
 
     def init_windows(self):
         self.main_window = curses.initscr()
@@ -148,12 +158,15 @@ class Core:
 
     def redraw(self):
         # TODO better redraw without deleting old objects
+        active_chat_id = self.__get_active_id()
         self.main_window.clear()
         self.main_window.refresh()
         self.init_windows()
         self.init_colors()
 
         self.draw_chats()
+        self.chats.set_active_chat_id(active_chat_id)
+        self.draw_messages()
 
     def init_colors(self):
         ACTIVE_CHAT = 1
@@ -214,7 +227,7 @@ class Core:
         if key == 'o' and self.char_query != '':
             self.download_media(self.__get_active_id(), int(self.char_query))
 
-        if key == 'R':
+        if key == 'R' or key == 'KEY_RESIZE':
             self.redraw()
 
         if key not in string.digits:
@@ -230,7 +243,7 @@ class Core:
     def loop(self):
         while True:
             ch = self.main_window.getkey()
-            # print(ch)
+            print(ch)
             self.key_handler(ch)
 
             if self.new_data_event.is_set():
