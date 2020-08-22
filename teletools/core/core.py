@@ -97,7 +97,7 @@ class Core:
 
     def go_inside(self):
         pass
-        if self.folder == FOLDER.DEFAULT and self.chats.get_active_chat_id() == 0:
+        if self.folder == FOLDER.DEFAULT and self.__get_active_id() == 0:
             self.folder = FOLDER.ARHIVED
             self.draw_chats()
             self.draw_messages()
@@ -109,13 +109,16 @@ class Core:
             self.draw_chats()
             self.draw_messages()
 
+    def __get_active_id(self):
+        return self.chats.get_active_chat_id()
+
     def draw_messages(self, noupdate=False):
-        if self.chats.get_active_chat_id() == 0:  # checking archive folder
+        if self.__get_active_id() == 0:  # checking archive folder
             self.messages.clear()
             return
         if not noupdate:
-            self.update_messages(self.chats.get_active_chat_id())
-        messages_list = self.database.get_messages(self.chats.get_active_chat_id())
+            self.update_messages(self.__get_active_id())
+        messages_list = self.database.get_messages(self.__get_active_id())
 
         def _get_flags(msg):
             flags = ''
@@ -190,7 +193,7 @@ class Core:
     def key_handler(self, key):
         if key in string.digits:
             self.number_kit += key
-            # TODO: drawn number status
+            # TODO: draw number status
         print(self.number_kit)
         if key == 'j':
             self.chats.move_down(int(self.number_kit) if self.number_kit else 1)
@@ -203,12 +206,12 @@ class Core:
             self.exit()
             return
 
-        # if key == ord('i'):
-        #     # insert mode
-        #     pass
+        if key == 'o' and self.number_kit != '':
+            self.download_media(self.__get_active_id(), int(self.number_kit))
+
         if key == 'R':
             self.redraw()
-        # time.sleep(0.2)
+
         if key not in string.digits:
             self.number_kit = ''
 
@@ -243,7 +246,11 @@ class Core:
         self.update_queue.put_nowait(event)
 
     def update_messages(self, id, from_id=None, to_id=None):
-        # TODO: push event to self.update_queue
+        # TODO: make this method work faster
         event = Update(UpdateType.MESSAGES_UPDATE, dialog_id=id)
         self.update_queue.put_nowait(event)
-        print(self.update_queue.qsize())
+
+    def download_media(self, dialog_id, message_id):
+        event = Update(UpdateType.MEDIA_DOWNLOAD, dialog_id=dialog_id, message_id=message_id)
+        self.update_queue.put_nowait(event)
+        print('added to queue')

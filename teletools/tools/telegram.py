@@ -2,7 +2,7 @@ import asyncio
 import queue
 import threading
 import time
-
+import os.path
 
 from telethon import TelegramClient, events
 
@@ -23,7 +23,6 @@ class TelegramApi:
 
         self.client = TelegramClient('session', api_id, api_hash)
         self.client.start()
-        # self.update_dialogs()
 
         # using decorators
         self.client.on(events.NewMessage())(self._new_message_handler)
@@ -57,6 +56,13 @@ class TelegramApi:
                 if update.type == UpdateType.MESSAGES_UPDATE and \
                         (time.time() - self.last_update.get(update.dialog_id, 0)) > 120:
                     self.loop.create_task(self._update_messages(id=update.dialog_id))
+                if update.type == UpdateType.MEDIA_DOWNLOAD:
+                    print('CREATING DOWNLOAD_MEDIA_TASK_IN_LOOP')
+                    self.loop.create_task(
+                        self._download_media(dialog_id=update.dialog_id, message_id=update.message_id)
+                    )
+
+
             else:
                 await asyncio.sleep(5)
             # await asyncio.sleep(0.1)
@@ -123,3 +129,17 @@ class TelegramApi:
         self.database.update_messages(messages, dialog.id)
         self.database.update_dialogs(dialog)
         self.new_data_event.set()
+
+    async def _download_media(self, dialog_id, message_id):
+        message = await self.client.get_messages(dialog_id, ids=message_id)
+        file = message.file
+        if file is None:
+            print(f'No media in message [id: {message_id}]')
+            return
+
+        filename = f'files/{dialog_id}_{message_id}{file.ext}'  # TODO: make settings for download folder
+        if not os.path.isfile(filename):
+            await message.download_media(filename, progress_callback=print)
+
+        # TODO: message opening by mime_type
+        #  https://docs.telethon.dev/en/latest/modules/custom.html#telethon.tl.custom.file.File
