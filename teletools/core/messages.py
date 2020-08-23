@@ -4,6 +4,7 @@ from pprint import pprint
 import time
 from ..classes.modes import DRAWMODE
 from ..classes.modes import Colors
+import unicodedata
 
 
 class Messages:
@@ -12,8 +13,8 @@ class Messages:
         self.colors = Colors()  # color palette
         self.message_list = None
         self.active_msg = None
-        self.shift = None  # draw message_list with this shift
         self.drown_number = 0  # number of messages that are drown on the screen
+        self._last_drown_id = 0  # TODO: needs normal name. func too
 
     def set_message_list(self, message_list):
         """message_list = {
@@ -26,7 +27,6 @@ class Messages:
         }
         """
         self.message_list = message_list
-        self.shift = 0
         self._draw_messages()
 
     @staticmethod
@@ -50,14 +50,26 @@ class Messages:
         title_right += '[' + msg.get('flags') + '] '
 
         title_right += self._get_time(msg['date'])
-        title = title_left.ljust(self.width)[:-len(title_right)] + title_right
+        title = title_left.ljust(self.width - self.__count_wide_unicode_chars(title_left))[:-len(title_right)] \
+                + title_right
         return title
+
+    @staticmethod
+    def __count_wide_unicode_chars(s):
+        ans = 0
+        try:
+            for i in s:
+                if unicodedata.east_asian_width(i) == 'W':
+                    ans += 1
+        except TypeError:
+            pass
+        return ans
 
     def _draw_messages(self):
         self.window.clear()
         line = self.height - 1
         self.drown_number = 0
-        for msg in self.message_list[self.shift:]:
+        for msg in self.message_list:
 
             if msg.get('media') and line >= 0:
                 self.window.insstr(line, 0, '[media]')
@@ -127,6 +139,10 @@ class Messages:
     def clear(self):
         self.window.clear()
         self.window.refresh()
+
+    def get_last_drown_id(self):
+        """Returns the id of last drown message"""
+        return self._last_drown_id
 
     # def _update_active_msg(self):
     #     """This function helps to keep active msg when updating message list"""
