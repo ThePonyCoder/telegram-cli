@@ -70,6 +70,7 @@ class Colors:
     def _init_message_color(self):
         self.__add_color(self.message, 'author', self._GREEN, self._BLACK)
         self.__add_color(self.message, 'default', self._WHITE, self._BLACK)
+        self.__add_color(self.message, 'media', self._PINK, self._BLACK)
 
     def _init_dialog_color(self):
         self.__add_color(self.dialog, 'selected', self._BLACK, self._CYAN)

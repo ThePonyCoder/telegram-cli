@@ -27,6 +27,8 @@ class Messages:
         }
         """
         self.message_list = message_list
+        self._last_drown_id = self.message_list[0].get('id')
+        print(self._last_drown_id)
         self._draw_messages()
 
     @staticmethod
@@ -69,10 +71,10 @@ class Messages:
         self.window.clear()
         line = self.height - 1
         self.drown_number = 0
-        for msg in self.message_list:
 
-            if msg.get('media') and line >= 0:
-                self.window.insstr(line, 0, '[media]')
+        for msg in self.message_list:
+            if msg.get('mediatype') and line >= 0:
+                self.window.insstr(line, 0, f'[{msg.get("mediatype")}]', self.colors.message.media)
                 line -= 1
 
             if msg.get('text'):

@@ -56,6 +56,7 @@ class Core:
                 self.draw_chats(noupdate=True)
                 self.draw_messages(noupdate=True)
                 self.new_data_event.clear()
+                print('NEW_EVENT')
             time.sleep(1)
 
     def init_windows(self):
@@ -148,13 +149,30 @@ class Core:
             flags += 's' if msg.get('sticker') else '-'
             return flags
 
+        def _get_media_type(msg):
+            if msg.get('photo'):
+                return 'photo'
+            if msg.get('audio'):
+                return 'audio'
+            if msg.get('video'):
+                return 'video'
+            if msg.get('voice'):
+                return 'voice'
+            if msg.get('file'):
+                return 'file'
+            if msg.get('gif'):
+                return 'gif'
+            if msg.get('sticker'):
+                return 'sticker'
+            return None
+
         reduced_message_list = [{
             'title': str(self.database.get_user_name(i['from_id'])[1]),
             'id': i['id'],
             'flags': _get_flags(i),
             'text': i['message'],
             'date': i['date'],
-            'media': i['media']
+            'mediatype': _get_media_type(i)
         } for i in messages_list]
         self.messages.set_message_list(reduced_message_list)
 
