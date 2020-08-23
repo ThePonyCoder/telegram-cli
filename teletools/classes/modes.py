@@ -51,6 +51,10 @@ class Colors:
         self._init_status_color()
 
     def _init_colors(self):
+        # change default colors
+        curses.init_color(curses.COLOR_BLACK, *self.__tocrgb((40, 42, 54)))
+        curses.init_color(curses.COLOR_WHITE, *self.__tocrgb((139, 233, 253)))
+
         curses.init_color(self._BLACK, *self.__tocrgb((40, 42, 54)))
         curses.init_color(self._GRAY, *self.__tocrgb((68, 71, 90)))
         curses.init_color(self._WHITE, *self.__tocrgb((248, 248, 242)))
