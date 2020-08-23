@@ -2,13 +2,13 @@ import sys
 import curses
 from pprint import pprint
 import time
-from ..classes.modes import DRAWMODE
+from ..classes.modes import DRAWMODE, Colors
 
 
 class Status:
     def __init__(self, window):
         self._window = window  # curses.window
-        self._colors = None  # color palette
+        self._colors = Colors()  # color palette
         self._char_query = ''
         self._new_messages_counter = 0
         self._mode = 'DIALOGS'
@@ -38,13 +38,9 @@ class Status:
         newmsgstr = f' [{self._new_messages_counter}] '
         numberkitstr = f' {self._char_query} '
 
-        curses.init_color(123, 686, 843, 529)
+        self._window.insstr(dialogstr, self._colors.status.dialog_name | curses.A_BOLD)
 
-        curses.init_pair(125, 123, curses.COLOR_BLACK)
-        self._window.insstr(dialogstr, curses.color_pair(125) | curses.A_BOLD)
-
-        curses.init_pair(124, curses.COLOR_BLACK, 123)
-        self._window.insstr(modestr, curses.color_pair(124) | curses.A_BOLD)
+        self._window.insstr(modestr, self._colors.status.mode | curses.A_BOLD)
 
         self._window.insstr(0, self._width - len(newmsgstr), newmsgstr)
         self._window.addstr(0, self._width - len(newmsgstr) - len(numberkitstr), numberkitstr)
@@ -52,6 +48,7 @@ class Status:
         pass
 
     def set_colors(self, colors):
+        pass
         """
         colors example:
             {
@@ -60,7 +57,7 @@ class Status:
                 'alert': curses.pair_content(ALERT)
             }
         """
-        self.colors = colors
+        self._colors = colors
 
     def clear(self):
         self._window.clear()
@@ -75,4 +72,5 @@ class Status:
         return self._window.getmaxyx()[1]
 
     def set_colors(self, colors):
-        self.colors = colors
+        pass
+        self._colors = colors

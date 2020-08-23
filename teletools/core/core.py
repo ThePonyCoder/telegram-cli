@@ -8,7 +8,7 @@ import time
 from .chats import Chats
 from .messages import Messages
 from ..classes.modes import DRAWMODE, FOLDER
-from ..classes.modes import MODE
+from ..classes.modes import MODE, Colors
 from ..tools.database import Database
 from ..classes.update import Update, UpdateType
 from .statusline import Status
@@ -45,7 +45,6 @@ class Core:
         self.char_query = ''
 
         self.init_windows()
-        self.init_colors()
 
         threading.Thread(target=self.continuous_updates).start()
 
@@ -165,41 +164,14 @@ class Core:
         self.main_window.clear()
         self.main_window.refresh()
         self.init_windows()
-        self.init_colors()
 
         self.draw_chats()
         self.chats.set_active_chat_id(active_chat_id)
         self.draw_messages()
 
-    def init_colors(self):
-        ACTIVE_CHAT = 1
-        INACTIVE_CHAT = 2
-        ALERT = 3
-        AUTHOR = 4
-
-        DRAWMODE_DEFAULT = 5
-        DRAWMODE_SELECTED = 6
-
-        curses.start_color()
-        curses.init_pair(ACTIVE_CHAT, curses.COLOR_BLACK, curses.COLOR_BLUE)
-        curses.init_pair(INACTIVE_CHAT, curses.COLOR_BLUE, curses.COLOR_BLACK)
-        curses.init_pair(ALERT, curses.COLOR_BLACK, curses.COLOR_YELLOW)
-        curses.init_pair(AUTHOR, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        curses.init_pair(DRAWMODE_DEFAULT, curses.COLOR_WHITE, curses.COLOR_BLACK)
-        curses.init_pair(DRAWMODE_SELECTED, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-
-        COLORS = {  # TODO: make normal colors defenitions
-            'active': curses.color_pair(ACTIVE_CHAT),
-            'inactive': curses.color_pair(INACTIVE_CHAT),
-            'alert': curses.color_pair(ALERT),
-            'author': curses.color_pair(AUTHOR),
-            DRAWMODE.DEFAULT: curses.color_pair(DRAWMODE_DEFAULT),
-            DRAWMODE.SELECTED: curses.color_pair(DRAWMODE_SELECTED)
-        }
-
-        self.chats.set_colors(COLORS)
-        self.messages.set_colors(COLORS)
-        self.status.set_colors(COLORS)
+        # self.chats.set_colors(COLORS)
+        # self.messages.set_colors(COLORS)
+        # self.status.set_colors(COLORS)
 
     @staticmethod
     def get_sizes(height, width):

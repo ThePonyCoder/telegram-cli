@@ -1,5 +1,5 @@
 import curses
-
+from ..classes.modes import Colors
 
 # Интерфейсы:
 # move_up
@@ -10,13 +10,11 @@ import curses
 
 class Chats:
     def __init__(self, window):
-        """
 
-        """
         self._window = window
         self._active_chat_id = None
         self._chat_list = None
-        self._colors = None
+        self._colors = Colors()
         self._visible_start = 0
         self._visible_end = 0
 
@@ -46,6 +44,7 @@ class Chats:
         self._draw_chats()
 
     def set_colors(self, colors):
+        pass
         """
         colors example:
             {
@@ -100,11 +99,12 @@ class Chats:
         self._update_viewrange()
         self._window.erase()
         for line, chat in enumerate(self._chat_list[self._visible_start:self._visible_end]):
+            number = str(abs(line + self._visible_start - self._get_active_chat_pos()))
             flags = '[' + chat['flags'] + ']'
-            name = (flags + chat['name']).ljust(self._width)[:self._width - 1] + ' '
+            name = f' {number:>2}  {flags} {chat["name"]}'.ljust(self._width)[:self._width - 1] + ' '
             if chat['id'] == self._active_chat_id:
-                self._window.insstr(line, 0, name, curses.A_BOLD | self._colors['active'])
+                self._window.insstr(line, 0, name, curses.A_BOLD | self._colors.dialog.selected)
             else:
-                self._window.insstr(line, 0, name, curses.A_BOLD | self._colors['inactive'])
+                self._window.insstr(line, 0, name, curses.A_BOLD | self._colors.dialog.default)
 
         self._window.refresh()

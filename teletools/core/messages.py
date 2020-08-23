@@ -3,12 +3,13 @@ import curses
 from pprint import pprint
 import time
 from ..classes.modes import DRAWMODE
+from ..classes.modes import Colors
 
 
 class Messages:
     def __init__(self, window):
         self.window = window  # curses.window
-        self.colors = None  # color palette
+        self.colors = Colors()  # color palette
         self.message_list = None
         self.active_msg = None
         self.shift = None  # draw message_list with this shift
@@ -65,13 +66,13 @@ class Messages:
             if msg.get('text'):
                 splited = self._split_msg(msg.get('text'))
                 while line >= 0 and len(splited):
-                    self.window.insstr(line, 0, splited[-1], self.colors[DRAWMODE.DEFAULT])
+                    self.window.insstr(line, 0, splited[-1], self.colors.message.default)
                     splited = splited[:-1]
                     line -= 1
 
             if line >= 0:
                 title = self._create_title(msg)
-                self.window.insstr(line, 0, str(title), self.colors['author'])
+                self.window.insstr(line, 0, str(title), self.colors.message.author)
             line -= 2
             if line < 0:
                 break
@@ -112,6 +113,7 @@ class Messages:
         return self.window.getmaxyx()[1]
 
     def set_colors(self, colors):
+        pass
         """
         colors example:
             {
