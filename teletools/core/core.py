@@ -51,7 +51,6 @@ class Core:
     def continuous_updates(self):
         while True:
             self.main_window.refresh()
-            print(self.new_data_event.is_set())
             if self.new_data_event.is_set():
                 self.draw_chats(noupdate=True)
                 self.draw_messages(noupdate=True)
@@ -247,6 +246,7 @@ class Core:
         self.update_queue.put_nowait(event)
 
     def download_media(self, dialog_id, message_id):
-        event = Update(UpdateType.MEDIA_DOWNLOAD, dialog_id=dialog_id, message_id=message_id)
+        event = Update(UpdateType.MEDIA_DOWNLOAD, dialog_id=dialog_id, message_id=message_id,
+                       download_handler=self.status.set_download)
         self.update_queue.put_nowait(event)
         print('added to queue')

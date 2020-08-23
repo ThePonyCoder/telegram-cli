@@ -75,6 +75,7 @@ class Colors:
     def _init_status_color(self):
         self.__add_color(self.status, 'mode', self._BLACK, self._GREEN)
         self.__add_color(self.status, 'dialog_name', self._GREEN, self._BLACK)
+        self.__add_color(self.status, 'download', self._PURPLE, self._BLACK)
 
     @staticmethod
     def __tocrgb(rgb: tuple):

@@ -47,8 +47,8 @@ class TelegramApi:
     async def _updates_handler(self):
         """Main loop function"""
         while True:
-            print('making updates')
             if not self.update_queue.empty():
+                print('FOND NEW TASK IN QUEUE, WORKING...')
                 update = self.update_queue.get()
                 if update.type == UpdateType.DIALOGUES_UPDATE and \
                         (time.time() - self.last_update.get('dialogs', 0)) > 120:
@@ -61,7 +61,8 @@ class TelegramApi:
                 if update.type == UpdateType.MEDIA_DOWNLOAD:
                     print('CREATING DOWNLOAD_MEDIA_TASK_IN_LOOP')
                     self.loop.create_task(
-                        self._download_media(dialog_id=update.dialog_id, message_id=update.message_id)
+                        self._download_media(dialog_id=update.dialog_id, message_id=update.message_id,
+                                             download_handler=update.download_handler)
                     )
 
 
@@ -131,7 +132,7 @@ class TelegramApi:
         self.database.update_messages(messages, dialog.id)
         self.new_data_event.set()
 
-    async def _download_media(self, dialog_id, message_id, auto_open=True):
+    async def _download_media(self, dialog_id, message_id, download_handler=print, auto_open=True):
         message = await self.client.get_messages(dialog_id, ids=message_id)
         file = message.file
         print(file.mime_type)
@@ -141,8 +142,10 @@ class TelegramApi:
 
         filename = f'files/{dialog_id}_{message_id}{file.ext}'  # TODO: make settings for download folder
         if not os.path.isfile(filename):
-            await message.download_media(filename, progress_callback=print)
+            await message.download_media(filename, progress_callback=download_handler)
         if auto_open:
             if file.mime_type.startswith('image'):
                 os.system(f'sxiv {filename}')
+            if file.mime_type.startswith('video'):
+                os.system(f'mpv {filename}')
         # TODO: support more mime types + setting for default image viewers
