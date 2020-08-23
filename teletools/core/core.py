@@ -140,13 +140,8 @@ class Core:
 
         def _get_flags(msg):
             flags = ''
-            flags += 'p' if msg.get('photo') else '-'
-            flags += 'a' if msg.get('audio') else '-'
-            flags += 'v' if msg.get('video') else '-'
-            flags += 'V' if msg.get('voice') else '-'
-            flags += 'f' if msg.get('file') else '-'
-            flags += 'g' if msg.get('gif') else '-'
-            flags += 's' if msg.get('sticker') else '-'
+            flags += 'r' if msg.get('is_reply') else '-'
+            flags += 'f' if msg.get('forward') else '-'
             return flags
 
         def _get_media_type(msg):
@@ -164,6 +159,8 @@ class Core:
                 return 'gif'
             if msg.get('sticker'):
                 return 'sticker'
+            if msg.get('poll'):
+                return 'poll'
             return None
 
         reduced_message_list = [{
