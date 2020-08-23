@@ -4,6 +4,7 @@ import curses.textpad
 import queue
 import threading
 import time
+import os
 
 from .chats import Chats
 from .messages import Messages
@@ -221,8 +222,8 @@ class Core:
             self.key_handler(ch)
 
     def exit(self, code=0):
-        self.main_window.clear()
-        self.main_window.refresh()
+        curses.endwin()
+        os._exit(0)
 
     def run(self):
         self.draw_chats()
