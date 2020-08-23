@@ -159,6 +159,22 @@ class Database:
                     date DESC
                 LIMIT ?;
             """, [dialog_id, limit])
+        else:
+            if max_id is None:
+                raise Exception('You must specify at least max_id!!!!')
+            if min_id is None:
+                min_id = 0
+            cursor = cursor.execute("""
+                SELECT * from messages
+                WHERE 
+                    dialog_id=? AND
+                    ? <= id AND
+                    id <= ?
+                ORDER BY 
+                    date DESC
+                LIMIT ?;
+            """, [dialog_id, min_id, max_id, limit])
+
         messages = []
         for i in cursor:
             message = {
@@ -242,7 +258,6 @@ class Database:
         return dialogs
 
     def get_dialog_name(self, id):
-
         conn, cursor = self.connect()
         name = cursor.execute("""
             SELECT name from dialogs

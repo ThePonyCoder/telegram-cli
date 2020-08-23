@@ -14,7 +14,7 @@ class Messages:
         self.message_list = None
         self.active_msg = None
         self.drown_number = 0  # number of messages that are drown on the screen
-        self._last_drown_id = 0  # TODO: needs normal name. func too
+        self._last_drown_id = None  # TODO: needs normal name. func too
 
     def set_message_list(self, message_list):
         """message_list = {

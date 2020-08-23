@@ -57,11 +57,13 @@ class TelegramApi:
                     self.last_update['dialogs'] = time.time()
                 if update.type == UpdateType.MESSAGES_UPDATE and \
                         (time.time() - self.last_update.get(update.dialog_id, 0)) > 120:
-                    self.loop.create_task(self._update_messages(id=update.dialog_id))
+                    self.loop.create_task(self._update_messages(id=update.dialog_id,
+                                                                ids=update.ids))
                 if update.type == UpdateType.MEDIA_DOWNLOAD:
                     print('CREATING DOWNLOAD_MEDIA_TASK_IN_LOOP')
                     self.loop.create_task(
-                        self._download_media(dialog_id=update.dialog_id, message_id=update.message_id,
+                        self._download_media(dialog_id=update.dialog_id,
+                                             message_id=update.message_id,
                                              download_handler=update.download_handler)
                     )
 
@@ -76,12 +78,19 @@ class TelegramApi:
 
         self.new_data_event.set()
 
-    async def _update_messages(self, id, limit=10, min_id=None, max_id=None):
+    async def _update_messages(self, id, limit=10, min_id=None, max_id=None, ids=None):
         # TODO: settings for default limits
         messages = await self.client.get_messages(id, limit=limit)
 
+        replies_to_merge = []
         for message in messages:
             message.from_username, message.from_name = await self.__get_message_name(message)
+            if message.is_reply:
+                msg = await self.client.get_messages(id, limit=1, ids=message.reply_to_msg_id)
+                if msg:
+                    msg.from_username, msg.from_name = await self.__get_message_name(message)
+                    replies_to_merge.append(msg)
+        messages.extend(replies_to_merge)
 
         self.database.update_messages(messages, id)
         self.new_data_event.set()

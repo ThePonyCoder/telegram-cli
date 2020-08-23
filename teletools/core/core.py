@@ -163,14 +163,33 @@ class Core:
                 return 'poll'
             return None
 
-        reduced_message_list = [{
-            'title': str(self.database.get_user_name(i['from_id'])[1]),
-            'id': i['id'],
-            'flags': _get_flags(i),
-            'text': i['message'],
-            'date': i['date'],
-            'mediatype': _get_media_type(i)
-        } for i in messages_list]
+        reduced_message_list = []
+        for i in messages_list:
+            reply_to_text = ''
+            if i['is_reply']:
+                reply_to_id = i['reply_to_msg_id']
+                reply_to_msg = self.database.get_messages(dialog_id=self.__get_active_id(),
+                                                          limit=1,
+                                                          max_id=reply_to_id,
+                                                          min_id=reply_to_id)
+                if reply_to_msg:
+                    reply_to_text = reply_to_msg[0]['message']
+
+            reduced_msg = {
+                'title': str(self.database.get_user_name(i['from_id'])[1]),
+                'id': i['id'],
+                'flags': _get_flags(i),
+                'text': i['message'],
+                'date': i['date'],
+                'mediatype': _get_media_type(i),
+                'is_reply': i['is_reply'],
+                'reply_to_id': i['reply_to_msg_id'],
+                'reply_to_text': reply_to_text
+            }
+            if reply_to_text:
+                print(reply_to_text)
+            reduced_message_list.append(reduced_msg)
+
         self.messages.set_message_list(reduced_message_list)
 
     def redraw(self):
@@ -253,16 +272,16 @@ class Core:
 
     def update_dialogs(self):
         # TODO: push event to self.update_queue
-        event = Update(UpdateType.DIALOGUES_UPDATE)
+        event = Update(type=UpdateType.DIALOGUES_UPDATE)
         self.update_queue.put_nowait(event)
 
-    def update_messages(self, id, from_id=None, to_id=None):
+    def update_messages(self, id, from_id=None, to_id=None, ids=None):
         # TODO: make this method work faster
-        event = Update(UpdateType.MESSAGES_UPDATE, dialog_id=id)
+        event = Update(type=UpdateType.MESSAGES_UPDATE, dialog_id=id, ids=ids)
         self.update_queue.put_nowait(event)
 
     def download_media(self, dialog_id, message_id):
-        event = Update(UpdateType.MEDIA_DOWNLOAD, dialog_id=dialog_id, message_id=message_id,
+        event = Update(type=UpdateType.MEDIA_DOWNLOAD, dialog_id=dialog_id, message_id=message_id,
                        download_handler=self.status.set_download)
         self.update_queue.put_nowait(event)
         print('added to queue')
