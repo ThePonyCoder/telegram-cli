@@ -13,7 +13,7 @@ class Status:
         self._new_messages_counter = 0
         self._mode = 'DIALOGS'
         self._dialog_name = 'None'
-        self._download_percent = 0
+        self._download_percent = None
 
     def set_char_query(self, char_query):
         self._char_query = char_query
@@ -33,9 +33,9 @@ class Status:
 
     def set_download(self, received, total):
         print(received, total)
-        self._download_percent = int(received / total * 100)
+        self._download_percent = int(round(received / total * 100))
         if received == total:
-            self._download_percent = 0
+            self._download_percent = None
         self._update()
 
     def _update(self):
@@ -52,7 +52,7 @@ class Status:
         left_p += len(modestr)
         self._window.addstr(0, left_p, dialogstr, self._colors.status.dialog_name | curses.A_BOLD)
         left_p += len(dialogstr)
-        if self._download_percent:
+        if self._download_percent is not None:
             self._window.addstr(0, left_p, downloadstr, self._colors.status.download)
             left_p += len(downloadstr)
 
