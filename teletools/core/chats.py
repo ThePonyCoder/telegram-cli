@@ -1,5 +1,5 @@
 import curses
-from ..classes.modes import Colors
+from ..classes.colors import Colors
 
 # Интерфейсы:
 # move_up

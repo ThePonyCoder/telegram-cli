@@ -2,8 +2,7 @@ import sys
 import curses
 from pprint import pprint
 import time
-from ..classes.modes import DRAWMODE
-from ..classes.modes import Colors
+from ..classes.colors import Colors
 import unicodedata
 
 

@@ -1,6 +1,5 @@
 import string
 from enum import Enum, auto
-from ..classes.modes import DRAWMODE
 
 
 class MESSAGE_TYPE(Enum):
@@ -15,7 +14,6 @@ class Message:
         self.message = message
         self.entity = entity
         self.chat = chat
-        self.mode = DRAWMODE.DEFAULT
 
     @property
     def id(self):

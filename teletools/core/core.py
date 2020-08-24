@@ -8,8 +8,8 @@ import os
 
 from .chats import Chats
 from .messages import Messages
-from ..classes.modes import DRAWMODE, FOLDER
-from ..classes.modes import MODE, Colors
+from ..classes.colors import Colors
+from ..classes.modes import MODES
 from ..tools.database import Database
 from ..classes.update import Update, UpdateType
 from .statusline import Status
@@ -34,9 +34,10 @@ class Core:
         self.chats = None
         self.messages = None
         self.status = None
+        self.writer_window = None
 
-        self.mode = MODE.CHATS
-        self.folder = FOLDER.DEFAULT
+        self.draft = ''  # support inserting text
+        self.mode = MODES.DEFAULT
 
         # synchronisation between threads
         self.new_data_event = new_data_event
@@ -65,6 +66,7 @@ class Core:
         self.main_window.refresh()
         curses.noecho()
         curses.curs_set(0)
+
         height, width = self.main_window.getmaxyx()
 
         chats_width, messages_height = self.get_sizes(height, width)
@@ -80,6 +82,10 @@ class Core:
         self.chats = Chats(chats_window)
         self.messages = Messages(messages_window)
         self.status = Status(status_window)
+        self.writer_window = writer_window
+
+        # writer_window.border(0, 0, 0, 0)
+        writer_window.refresh()
 
     def draw_chats(self, noupdate=False):
         if not noupdate:
@@ -106,26 +112,11 @@ class Core:
             'flags': _get_chat_flags(i)
         } for i in chat_list]
 
-        if self.folder == FOLDER.DEFAULT:
-            reduced_chat_list.insert(0, {'name': 'Archived chats',
-                                         'id': 0,
-                                         'flags': '-f'
-                                         })  # This is archive folder!
+        reduced_chat_list.insert(0, {'name': 'Archived chats',
+                                     'id': 0,
+                                     'flags': '-f'
+                                     })  # This is archive folder!
         self.chats.set_chat_list(reduced_chat_list)
-
-    def go_inside(self):
-        pass
-        if self.folder == FOLDER.DEFAULT and self.__get_active_id() == 0:
-            self.folder = FOLDER.ARHIVED
-            self.draw_chats()
-            self.draw_messages()
-
-    def go_outside(self):
-        pass
-        if self.folder == FOLDER.ARHIVED:
-            self.folder = FOLDER.DEFAULT
-            self.draw_chats()
-            self.draw_messages()
 
     def __get_active_id(self):
         return self.chats.get_active_chat_id()
@@ -211,6 +202,15 @@ class Core:
         # self.messages.set_colors(COLORS)
         # self.status.set_colors(COLORS)
 
+    def insert(self):
+        curses.curs_set(1)
+        self.status.set_mode(MODES.INSERT)
+        pad = curses.textpad.Textbox(self.writer_window)
+        pad.edit()
+        self.draft = pad.gather()
+        curses.curs_set(0)
+        self.status.set_mode(MODES.DEFAULT)
+
     @staticmethod
     def get_sizes(height, width):
         """
@@ -223,6 +223,8 @@ class Core:
         return chats_width, messages_height
 
     def key_handler(self, key):
+        if not key:
+            return
         if key in string.digits:
             self.update_query(key)
 
@@ -236,6 +238,9 @@ class Core:
         if key == 'q':
             self.exit()
             return
+
+        if key == 'i':
+            self.insert()
 
         if key == 'o' and self.char_query != '':
             self.download_media(self.__get_active_id(), int(self.char_query))
@@ -256,7 +261,6 @@ class Core:
     def loop(self):
         while True:
             ch = self.main_window.getkey()
-            print(ch)
             self.key_handler(ch)
 
     def exit(self, code=0):
@@ -264,6 +268,7 @@ class Core:
         os._exit(0)
 
     def run(self):
+
         self.draw_chats()
         self.draw_messages()
         self.status._update()

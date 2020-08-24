@@ -2,7 +2,8 @@ import sys
 import curses
 from pprint import pprint
 import time
-from ..classes.modes import DRAWMODE, Colors
+from ..classes.colors import Colors
+from ..classes.modes import MODES
 
 
 class Status:
@@ -11,9 +12,13 @@ class Status:
         self._colors = Colors()  # color palette
         self._char_query = ''
         self._new_messages_counter = 0
-        self._mode = 'DIALOGS'
+
         self._dialog_name = 'None'
         self._download_percent = None
+
+        self._mode_name = 'DIALOGS'
+        self._mode = MODES.DEFAULT
+        self._mode_color = self._colors.status.mode_dialogs
 
     def set_char_query(self, char_query):
         self._char_query = char_query
@@ -21,6 +26,13 @@ class Status:
 
     def set_mode(self, mode):
         self._mode = mode
+        if self._mode == MODES.DEFAULT:
+            self._mode_name = 'DIALOGS'
+            self._mode_color = self._colors.status.mode_dialogs
+        elif self._mode == MODES.INSERT:
+            self._mode_name = 'INSERT'
+            self._mode_color = self._colors.status.mode_insert
+
         self._update()
 
     def set_dialog_name(self, dialog_name):
@@ -41,14 +53,14 @@ class Status:
     def _update(self):
         # TODO: partial updates to save performance
         self._window.clear()
-        modestr = f' {self._mode} '
+        modestr = f' {self._mode_name} '
         dialogstr = f' {self._dialog_name} '
         newmsgstr = f' [{self._new_messages_counter}] '
         numberkitstr = f' {self._char_query} '
         downloadstr = f' dl: {self._download_percent}% '
 
         left_p = 0  # points to the first free char
-        self._window.addstr(0, left_p, modestr, self._colors.status.mode | curses.A_BOLD)
+        self._window.addstr(0, left_p, modestr, self._mode_color | curses.A_BOLD)
         left_p += len(modestr)
         self._window.addstr(0, left_p, dialogstr, self._colors.status.dialog_name | curses.A_BOLD)
         left_p += len(dialogstr)
