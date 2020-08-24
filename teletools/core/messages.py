@@ -27,7 +27,8 @@ class Messages:
         }
         """
         self.message_list = message_list
-        self._last_drown_id = self.message_list[0].get('id')
+        if len(self.message_list) > 1:
+            self._last_drown_id = self.message_list[0].get('id')
         print(self._last_drown_id)
         self._draw_messages()
 
@@ -36,7 +37,7 @@ class Messages:
         time_str = time.strftime('%Y-%m-%d %H:%M', time.localtime(timestamp))
         return time_str
 
-    def _create_title(self, msg):
+    def _create_title(self, msg, title_len=None):
         """
         msg = {
             id: mustbe,
@@ -45,14 +46,20 @@ class Messages:
             data: mustbe,
         }
         """
-        title_left = str(msg.get('title'))
+        if title_len is None:
+            title_len = self.width
 
-        title_right = str(msg.get('id')) + ' '
-
-        title_right += '[' + msg.get('flags') + '] '
-
-        title_right += self._get_time(msg['date'])
-        title = title_left.ljust(self.width - self.__count_wide_unicode_chars(title_left))[:-len(title_right)] \
+        title_left = ''
+        title_right = ''
+        if msg.get('title'):
+            title_left += str(msg.get('title'))
+        if msg.get('id'):
+            title_right += str(msg.get('id')) + ' '
+        if msg.get('flags'):
+            title_right += '[' + msg.get('flags') + '] '
+        if msg.get('date'):
+            title_right += self._get_time(msg['date'])
+        title = title_left.ljust(title_len - self.__count_wide_unicode_chars(title_left))[:-len(title_right)] \
                 + title_right
         return title
 
@@ -82,6 +89,23 @@ class Messages:
                 while line >= 0 and len(splited):
                     self.window.insstr(line, 0, splited[-1], self.colors.message.default)
                     splited = splited[:-1]
+                    line -= 1
+
+            if msg.get('is_reply'):
+                replytitle = self._create_title({
+                    'title': msg.get('reply_to_title'),
+                    'id': msg.get('reply_to_id')
+                }, title_len=self.width - 2)
+                replytitle = f'{msg.get("reply_to_title")} {msg.get("reply_to_id")}'
+                replyauthor = f' |{replytitle}'
+                replytext = f' |{msg.get("reply_to_text")}'.replace('\n', ' ')
+                if len(replytext) > self.width:
+                    replytext = replytext[:self.width - 3] + '...'
+                if line >= 0:
+                    self.window.insstr(line, 0, replytext, self.colors.message.reply)
+                    line -= 1
+                if line >= 0:
+                    self.window.insstr(line, 0, replyauthor, self.colors.message.reply)
                     line -= 1
 
             if line >= 0:

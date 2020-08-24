@@ -133,6 +133,7 @@ class Core:
     def draw_messages(self, noupdate=False):
         if self.__get_active_id() == 0:  # checking archive folder
             self.messages.clear()
+            self.status.set_dialog_name('Archive')
             return
         if not noupdate:
             self.update_messages(self.__get_active_id())
@@ -166,6 +167,7 @@ class Core:
         reduced_message_list = []
         for i in messages_list:
             reply_to_text = ''
+            reply_to_title = ''
             if i['is_reply']:
                 reply_to_id = i['reply_to_msg_id']
                 reply_to_msg = self.database.get_messages(dialog_id=self.__get_active_id(),
@@ -174,9 +176,11 @@ class Core:
                                                           min_id=reply_to_id)
                 if reply_to_msg:
                     reply_to_text = reply_to_msg[0]['message']
+                    reply_to_title = reply_to_msg[0]['from_name']
 
             reduced_msg = {
-                'title': str(self.database.get_user_name(i['from_id'])[1]),
+                # 'title': str(self.database.get_user_name(i['from_id'])[1]),
+                'title': i['from_name'],
                 'id': i['id'],
                 'flags': _get_flags(i),
                 'text': i['message'],
@@ -184,13 +188,13 @@ class Core:
                 'mediatype': _get_media_type(i),
                 'is_reply': i['is_reply'],
                 'reply_to_id': i['reply_to_msg_id'],
-                'reply_to_text': reply_to_text
+                'reply_to_text': reply_to_text,
+                'reply_to_title': reply_to_title
             }
-            if reply_to_text:
-                print(reply_to_text)
             reduced_message_list.append(reduced_msg)
 
         self.messages.set_message_list(reduced_message_list)
+        self.status.set_dialog_name(self.chats.get_active_chat_name())
 
     def redraw(self):
         # TODO better redraw without deleting old objects

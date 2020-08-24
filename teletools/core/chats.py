@@ -18,6 +18,8 @@ class Chats:
         self._visible_start = 0
         self._visible_end = 0
 
+        self._active_chat_name = None
+
     def set_chat_list(self, chat_list):
         """
             chat_list = [
@@ -58,7 +60,11 @@ class Chats:
     def get_active_chat_id(self):
         return self._active_chat_id
 
+    def get_active_chat_name(self):
+        return self._active_chat_name
+
     def set_active_chat_id(self, id):
+        """This is used to recreate Object, but leave the selected chat the same"""
         self._active_chat_id = id
         self._draw_chats()
 
@@ -67,6 +73,7 @@ class Chats:
             self._active_chat_id = self._chat_list[0]['id']
 
         pos = self._get_active_chat_pos()
+        self._active_chat_name = self._chat_list[pos].get('name')
         if len(self._chat_list) < self._height:
             start = 0
             end = self._height
