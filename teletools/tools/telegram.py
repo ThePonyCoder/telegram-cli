@@ -66,7 +66,13 @@ class TelegramApi:
                                              message_id=update.message_id,
                                              download_handler=update.download_handler)
                     )
-
+                if update.type == UpdateType.SEND_MESSAGE:
+                    self.loop.create_task(
+                        self._send_message(
+                            dialog_id=update.dialog_id,
+                            text=update.message
+                        )
+                    )
 
             else:
                 await asyncio.sleep(5)
@@ -158,3 +164,9 @@ class TelegramApi:
             if file.mime_type.startswith('video'):
                 os.system(f'mpv {filename}')
         # TODO: support more mime types + setting for default image viewers
+
+    async def _send_message(self, dialog_id, text):
+        message = await self.client.send_message(entity=dialog_id, message=text)
+        message.from_username, message.from_name = await self.__get_message_name(message)
+        self.database.update_messages(message, dialog_id)
+        self.new_data_event.set()

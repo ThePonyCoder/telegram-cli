@@ -211,6 +211,18 @@ class Core:
         curses.curs_set(0)
         self.status.set_mode(MODES.DEFAULT)
 
+    def send_message(self):
+        if self.draft == '':
+            return
+        self.update_queue.put_nowait(Update(
+            type=UpdateType.SEND_MESSAGE,
+            dialog_id=self.__get_active_id(),
+            message=self.draft
+        ))
+        self.draft = ''
+        self.writer_window.clear()
+        self.writer_window.refresh()
+
     @staticmethod
     def get_sizes(height, width):
         """
@@ -242,6 +254,9 @@ class Core:
         if key == 'i':
             self.insert()
 
+        if key == '\n':
+            self.send_message()
+
         if key == 'o' and self.char_query != '':
             self.download_media(self.__get_active_id(), int(self.char_query))
 
@@ -262,6 +277,7 @@ class Core:
         while True:
             ch = self.main_window.getkey()
             self.key_handler(ch)
+            print(repr(ch))
 
     def exit(self, code=0):
         curses.endwin()
