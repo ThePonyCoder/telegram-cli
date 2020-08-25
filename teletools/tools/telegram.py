@@ -32,7 +32,6 @@ class TelegramApi:
         self.client.on(events.MessageRead())(self._read_message_handler)
 
         # updating data before start
-        # self.loop.create_task(self.client.catch_up())
         self.loop.create_task(self._update_dialogs())
 
         # starting real time updates
@@ -118,6 +117,7 @@ class TelegramApi:
             return None, None
 
     async def _new_message_handler(self, event):
+        print('new_message')
         message = event.message
 
         dialog = await event.get_chat()
@@ -128,6 +128,7 @@ class TelegramApi:
         self.new_data_event.set()
 
     async def _edit_message_handler(self, event):
+        print('edit_message')
         message = event.message
         dialog = await event.get_chat()
 
@@ -137,6 +138,7 @@ class TelegramApi:
         self.new_data_event.set()
 
     async def _read_message_handler(self, event):
+        print('read_message')
         pass
         messages = await event.get_messages()
         dialog = await event.get_chat()
