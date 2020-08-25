@@ -53,12 +53,11 @@ class Core:
     def continuous_updates(self):
         while True:
             self.main_window.refresh()
-            if self.new_data_event.is_set():
-                self.draw_chats(noupdate=True)
-                self.draw_messages(noupdate=True)
-                self.new_data_event.clear()
-                print('NEW_EVENT')
-            time.sleep(1)
+            self.new_data_event.wait()
+
+            self.draw_chats(noupdate=True)
+            self.draw_messages(noupdate=True)
+            self.new_data_event.clear()
 
     def init_windows(self):
         self.main_window = curses.initscr()
