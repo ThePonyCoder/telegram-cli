@@ -8,11 +8,13 @@ import os
 
 from .chats import Chats
 from .messages import Messages
+from .writer import Writer
 from ..classes.colors import Colors
 from ..classes.modes import MODES
 from ..tools.database import Database
 from ..classes.update import Update, UpdateType
 from .statusline import Status
+import _curses
 
 # sizes of windows
 CHATS_WIDTH = 2
@@ -34,7 +36,7 @@ class Core:
         self.chats = None
         self.messages = None
         self.status = None
-        self.writer_window = None
+        self.writer = None
 
         self.draft = ''  # support inserting text
         self.mode = MODES.DEFAULT
@@ -82,7 +84,7 @@ class Core:
         self.chats = Chats(chats_window)
         self.messages = Messages(messages_window)
         self.status = Status(status_window)
-        self.writer_window = writer_window
+        self.writer = Writer(writer_window)
 
         # writer_window.border(0, 0, 0, 0)
         writer_window.refresh()
@@ -202,15 +204,6 @@ class Core:
         # self.messages.set_colors(COLORS)
         # self.status.set_colors(COLORS)
 
-    def insert(self):
-        curses.curs_set(1)
-        self.status.set_mode(MODES.INSERT)
-        pad = curses.textpad.Textbox(self.writer_window)
-        pad.edit()
-        self.draft = pad.gather()
-        curses.curs_set(0)
-        self.status.set_mode(MODES.DEFAULT)
-
     def send_message(self):
         if self.draft == '':
             return
@@ -220,8 +213,7 @@ class Core:
             message=self.draft
         ))
         self.draft = ''
-        self.writer_window.clear()
-        self.writer_window.refresh()
+        self.writer.clear()
 
     @staticmethod
     def get_sizes(height, width):
@@ -234,37 +226,93 @@ class Core:
         messages_height = int(height / (WRITER_HEIGHT + MESSAGES_HEIGHT) * MESSAGES_HEIGHT)
         return chats_width, messages_height
 
-    def key_handler(self, key):
-        if not key:
-            return
-        if key in string.digits:
-            self.update_query(key)
+    def insert_key_handler(self, s):
 
-        if key == 'j':
+        if s == '^[':
+            self._leave_insert_mode()
+            return
+
+        if s == '^[[D':
+            self.writer.prev()
+            return
+
+        if s == '^[[C':
+            self.writer.next()
+            return
+
+        self.writer.addch(s)
+
+    @staticmethod
+    def _unctr(char):
+        try:
+            unctr = curses.unctrl(char)
+            return unctr
+        except OverflowError:
+            return ''
+
+    def _enter_insert_mode(self):
+        self.mode = MODES.INSERT
+        self.status.set_mode(MODES.INSERT)
+
+    def _leave_insert_mode(self):
+        self.mode = MODES.DEFAULT
+        self.status.set_mode(MODES.DEFAULT)
+
+    def key_handler(self, s):
+        if not s:
+            return
+
+        if self.mode == MODES.INSERT:
+            self.insert_key_handler(s)
+            return
+
+        if isinstance(s, str) and len(s) == 1 and s in string.digits:
+            self.update_query(s)
+
+        if s == 'j':
             self.chats.move_down(int(self.char_query) if self.char_query else 1)
             self.draw_messages()
-        if key == 'k':
+        if s == 'k':
             self.chats.move_up(int(self.char_query) if self.char_query else 1)
             self.draw_messages()
 
-        if key == 'q':
+        if s == 'q':
             self.exit()
             return
 
-        if key == 'i':
-            self.insert()
+        if s == 'i':
+            self._enter_insert_mode()
 
-        if key == '\n':
+        if s == '\n':
             self.send_message()
 
-        if key == 'o' and self.char_query != '':
+        if s == 'o' and self.char_query != '':
             self.download_media(self.__get_active_id(), int(self.char_query))
 
-        if key == 'R' or key == 'KEY_RESIZE':
+        if s == 'R' or s == 410:
             self.redraw()
 
-        if key not in string.digits:
+        if isinstance(s, str) and len(s) == 1 and s not in string.digits:
             self.update_query()
+
+    def loop(self):
+        while True:
+            wch = self.main_window.get_wch()
+            s = self._unctr(wch)
+
+            # handling some special keybindings
+            self.main_window.nodelay(True)
+            while True:
+                try:
+                    s += self._unctr(self.main_window.get_wch())
+                except _curses.error:
+                    break
+            self.main_window.nodelay(False)
+
+            s = s.decode()
+            print(s)
+
+            self.key_handler(s)
 
     def update_query(self, char=None):
         if char is None:
@@ -272,12 +320,6 @@ class Core:
         else:
             self.char_query += char
         self.status.set_char_query(self.char_query)
-
-    def loop(self):
-        while True:
-            ch = self.main_window.getkey()
-            self.key_handler(ch)
-            print(repr(ch))
 
     def exit(self, code=0):
         curses.endwin()
