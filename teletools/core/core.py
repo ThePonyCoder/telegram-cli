@@ -301,13 +301,14 @@ class Core:
             s = self._unctr(wch)
 
             # handling some special keybindings
-            self.main_window.nodelay(True)
-            while True:
-                try:
-                    s += self._unctr(self.main_window.get_wch())
-                except _curses.error:
-                    break
-            self.main_window.nodelay(False)
+            if s.decode() == '^[':
+                self.main_window.nodelay(True)
+                while True:
+                    try:
+                        s += self._unctr(self.main_window.get_wch())
+                    except _curses.error:
+                        break
+                self.main_window.nodelay(False)
 
             s = s.decode()
             print(s)
