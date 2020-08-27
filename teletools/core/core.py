@@ -205,14 +205,14 @@ class Core:
         # self.status.set_colors(COLORS)
 
     def send_message(self):
-        if self.draft == '':
+        draft = self.writer.get_draft()
+        if draft == '':
             return
         self.update_queue.put_nowait(Update(
             type=UpdateType.SEND_MESSAGE,
             dialog_id=self.__get_active_id(),
-            message=self.draft
+            message=draft
         ))
-        self.draft = ''
         self.writer.clear()
 
     @staticmethod
@@ -239,8 +239,14 @@ class Core:
         if s == '^[[C':
             self.writer.next()
             return
+        if s == '^?':
+            self.writer.rm()
+            return
+        if s == '^J':
+            s = '\n'
 
-        self.writer.addch(s)
+        if len(s) == 1:
+            self.writer.addch(s)
 
     @staticmethod
     def _unctr(char):
@@ -283,7 +289,7 @@ class Core:
         if s == 'i':
             self._enter_insert_mode()
 
-        if s == '\n':
+        if s == '^J':
             self.send_message()
 
         if s == 'o' and self.char_query != '':
@@ -298,19 +304,23 @@ class Core:
     def loop(self):
         while True:
             wch = self.main_window.get_wch()
-            s = self._unctr(wch)
 
-            # handling some special keybindings
-            if s.decode() == '^[':
-                self.main_window.nodelay(True)
-                while True:
-                    try:
-                        s += self._unctr(self.main_window.get_wch())
-                    except _curses.error:
-                        break
-                self.main_window.nodelay(False)
+            # handling escape sequences
+            try:
+                s = curses.unctrl(wch)
+                if s.decode() == '^[':
+                    self.main_window.nodelay(True)
+                    while True:
+                        try:
+                            s += self._unctr(self.main_window.get_wch())
+                        except _curses.error:
+                            break
+                    self.main_window.nodelay(False)
+                s = s.decode()
+            except OverflowError:
+                print('overflow')
+                s = wch
 
-            s = s.decode()
             print(s)
 
             self.key_handler(s)
