@@ -11,8 +11,6 @@ from ..classes.update import UpdateType
 
 AUTODOWNLOAD_PHOTOS = False
 
-def print(*args, **kwargs):
-    pass
 
 class TelegramApi:
     def __init__(self, api_id, api_hash, new_data_event: threading.Event, update_queue: queue.Queue):
@@ -112,8 +110,9 @@ class TelegramApi:
                 user = await self.client.get_entity(message_obj.from_id)
                 self.database.update_user(user)
                 username = user.username
-                name = (user.first_name if user.first_name else '') + (
-                    ' ' if user.first_name else '') + (user.last_name if user.last_name else '')
+                name = (user.first_name if user.first_name else '') + \
+                       (' ' if user.first_name else '') + \
+                       (user.last_name if user.last_name else '')
                 return username, name
         else:
             return None, None
@@ -171,6 +170,8 @@ class TelegramApi:
 
     async def _send_message(self, dialog_id, text):
         message = await self.client.send_message(entity=dialog_id, message=text)
+        message.from_id = (await self.client.get_me()).id
         message.from_username, message.from_name = await self.__get_message_name(message)
+        print(message.from_name)
         self.database.update_messages(message, dialog_id)
         self.new_data_event.set()
