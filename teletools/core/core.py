@@ -338,7 +338,7 @@ class Core:
                             break
                     self.main_window.nodelay(False)
                 s = s.decode()
-            except OverflowError:
+            except OverflowError or LookupError:
                 print('overflow')
                 s = wch
 
