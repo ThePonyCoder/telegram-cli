@@ -117,5 +117,4 @@ class Chats:
                 self._window.addstr(line, 0, name, curses.A_BOLD | self._colors.dialog.selected)
             else:
                 self._window.addstr(line, 0, name, curses.A_BOLD | self._colors.dialog.default)
-        self._window.refresh()
-        time.sleep(0.05)
+        # self._window.refresh()

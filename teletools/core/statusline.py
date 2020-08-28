@@ -70,7 +70,7 @@ class Status:
 
         self._window.insstr(0, self._width - len(newmsgstr), newmsgstr)
         self._window.addstr(0, self._width - len(newmsgstr) - len(numberkitstr), numberkitstr)
-        self._window.refresh()
+        # self._window.refresh()
 
     def set_colors(self, colors):
         pass
@@ -86,7 +86,7 @@ class Status:
 
     def clear(self):
         self._window.clear()
-        self._window.refresh()
+        # self._window.refresh()
 
     @property
     def _height(self):

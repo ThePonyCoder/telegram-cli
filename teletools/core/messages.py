@@ -111,8 +111,8 @@ class Messages:
                 break
             self.drown_number += 1
 
-        self.window.refresh()
-        time.sleep(0.05)
+        # self.window.refresh()
+        # time.sleep(0.05)
 
     def _split_msg(self, text):
         if not isinstance(text, str):
@@ -160,7 +160,7 @@ class Messages:
 
     def clear(self):
         self.window.clear()
-        self.window.refresh()
+        # self.window.refresh()
 
     def get_last_drown_id(self):
         """Returns the id of last drown message"""

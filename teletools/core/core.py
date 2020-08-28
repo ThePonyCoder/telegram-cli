@@ -26,10 +26,6 @@ CHATS_MARGIN = 1
 WRITER_MARGIN = 3
 
 
-def print(*args, **kwargs):
-    pass
-
-
 class Core:
     def __init__(self, new_data_event: threading.Event, update_queue: queue.Queue):
         self.database = Database()
@@ -69,6 +65,7 @@ class Core:
             self.new_data_event.clear()
             print('new_event')
             self.last_update_time = time.time()
+            self.refresh()
 
     def init_windows(self):
         self.main_window = curses.initscr()
@@ -218,6 +215,8 @@ class Core:
         self.chats.set_active_chat_id(active_chat_id)
         self.draw_messages()
 
+        self.refresh()
+
         # self.chats.set_colors(COLORS)
         # self.messages.set_colors(COLORS)
         # self.status.set_colors(COLORS)
@@ -245,35 +244,28 @@ class Core:
         return chats_width, messages_height
 
     def insert_key_handler(self, s):
-
         if s == '^[':
             self._leave_insert_mode()
-            return
 
-        if s == '^[[D':
+        elif s == '^[[D':
             self.writer.curs_left()
-            return
 
-        if s == '^[[C':
+        elif s == '^[[C':
             self.writer.curs_right()
-            return
 
-        if s == '^[[A':
+        elif s == '^[[A':
             self.writer.curs_up()
-            return
 
-        if s == '^[[B':
+        elif s == '^[[B':
             self.writer.curs_down()
-            return
 
-        if s == '^?':
+        elif s == '^?':
             self.writer.rm()
-            return
-        if s == '^J':
-            s = '\n'
-
-        if len(s) == 1:
+        elif len(s) == 1:
+            if s == '^J':
+                s = '\n'
             self.writer.addch(s)
+        self.refresh()
 
     @staticmethod
     def _unctr(char):
@@ -322,7 +314,7 @@ class Core:
         if s == 'o' and self.char_query != '':
             self.download_media(self.__get_active_id(), int(self.char_query))
 
-        if s == 'R' or s == 410:
+        if s == 'R' or s == '~Z':
             self.redraw()
 
         if isinstance(s, str) and len(s) == 1 and s not in string.digits:
@@ -351,6 +343,11 @@ class Core:
             # print(s)
 
             self.key_handler(s)
+            self.refresh()
+
+    def refresh(self):
+        self.main_window.touchwin()
+        self.main_window.refresh()
 
     def update_query(self, char=None):
         if char is None:
@@ -368,6 +365,7 @@ class Core:
         self.draw_chats()
         self.draw_messages()
         self.status._update()
+        self.refresh()
 
         self.loop()
 

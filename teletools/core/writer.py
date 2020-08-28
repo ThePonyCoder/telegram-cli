@@ -33,7 +33,7 @@ class Writer:
             line += 1
 
         self.window.chgat(*self.crs, 1, curses.A_REVERSE)
-        self.window.refresh()
+        # self.window.refresh()
 
     def curs_left(self):
         if not self.draft:
