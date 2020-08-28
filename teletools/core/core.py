@@ -233,11 +233,11 @@ class Core:
             return
 
         if s == '^[[D':
-            self.writer.prev()
+            self.writer.curs_left()
             return
 
         if s == '^[[C':
-            self.writer.next()
+            self.writer.curs_right()
             return
         if s == '^?':
             self.writer.rm()
