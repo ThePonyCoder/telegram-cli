@@ -67,7 +67,7 @@ class Writer:
             self.crs = [0, 0]
             self.redraw()
             return
-        self.crs[0] = min(self.crs[0] + 1, len(self.draft))
+        self.crs[0] = min(self.crs[0] + 1, len(self.draft) - 1)
         self.crs[1] = min(len(self.draft[self.crs[0]]), self.crs[1])
         self.redraw()
 
