@@ -91,10 +91,6 @@ class Messages:
                     line -= 1
 
             if msg.get('is_reply'):
-                replytitle = self._create_title({
-                    'title': msg.get('reply_to_title'),
-                    'id': msg.get('reply_to_id')
-                }, title_len=self.width - 2)
                 replytitle = f'{msg.get("reply_to_title")} {msg.get("reply_to_id")}'
                 replyauthor = f' |{replytitle}'
                 replytext = f' |{msg.get("reply_to_text")}'.replace('\n', ' ')
@@ -116,6 +112,7 @@ class Messages:
             self.drown_number += 1
 
         self.window.refresh()
+        time.sleep(0.05)
 
     def _split_msg(self, text):
         if not isinstance(text, str):

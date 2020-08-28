@@ -1,5 +1,8 @@
 import curses
+import time
+
 from ..classes.colors import Colors
+
 
 # Интерфейсы:
 # move_up
@@ -104,14 +107,15 @@ class Chats:
 
     def _draw_chats(self):
         self._update_viewrange()
-        self._window.erase()
+        self._window.clear()
         for line, chat in enumerate(self._chat_list[self._visible_start:self._visible_end]):
             number = str(abs(line + self._visible_start - self._get_active_chat_pos()))
             flags = '[' + chat['flags'] + ']'
             name = f' {number:>2}  {flags} {chat["name"]}'.ljust(self._width)[:self._width - 1] + ' '
+            name = name[:self._width - 1]
             if chat['id'] == self._active_chat_id:
-                self._window.insstr(line, 0, name, curses.A_BOLD | self._colors.dialog.selected)
+                self._window.addstr(line, 0, name, curses.A_BOLD | self._colors.dialog.selected)
             else:
-                self._window.insstr(line, 0, name, curses.A_BOLD | self._colors.dialog.default)
-
+                self._window.addstr(line, 0, name, curses.A_BOLD | self._colors.dialog.default)
         self._window.refresh()
+        time.sleep(0.05)

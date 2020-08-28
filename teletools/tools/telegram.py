@@ -11,6 +11,8 @@ from ..classes.update import UpdateType
 
 AUTODOWNLOAD_PHOTOS = False
 
+def print(*args, **kwargs):
+    pass
 
 class TelegramApi:
     def __init__(self, api_id, api_hash, new_data_event: threading.Event, update_queue: queue.Queue):
@@ -47,7 +49,7 @@ class TelegramApi:
         """Main loop function"""
         while True:
             if not self.update_queue.empty():
-                print('FOND NEW TASK IN QUEUE, WORKING...')
+                # print('FOND NEW TASK IN QUEUE, WORKING...')
                 update = self.update_queue.get()
                 if update.type == UpdateType.DIALOGUES_UPDATE and \
                         (time.time() - self.last_update.get('dialogs', 0)) > 120:
@@ -59,7 +61,7 @@ class TelegramApi:
                     self.loop.create_task(self._update_messages(id=update.dialog_id,
                                                                 ids=update.ids))
                 if update.type == UpdateType.MEDIA_DOWNLOAD:
-                    print('CREATING DOWNLOAD_MEDIA_TASK_IN_LOOP')
+                    # print('CREATING DOWNLOAD_MEDIA_TASK_IN_LOOP')
                     self.loop.create_task(
                         self._download_media(dialog_id=update.dialog_id,
                                              message_id=update.message_id,
@@ -117,7 +119,7 @@ class TelegramApi:
             return None, None
 
     async def _new_message_handler(self, event):
-        print('new_message')
+        # print('new_message')
         message = event.message
 
         dialog = await event.get_chat()
@@ -128,7 +130,7 @@ class TelegramApi:
         self.new_data_event.set()
 
     async def _edit_message_handler(self, event):
-        print('edit_message')
+        # print('edit_message')
         message = event.message
         dialog = await event.get_chat()
 
@@ -138,7 +140,7 @@ class TelegramApi:
         self.new_data_event.set()
 
     async def _read_message_handler(self, event):
-        print('read_message')
+        # print('read_message')
         pass
         messages = await event.get_messages()
         dialog = await event.get_chat()
@@ -152,9 +154,9 @@ class TelegramApi:
     async def _download_media(self, dialog_id, message_id, download_handler=print, auto_open=True):
         message = await self.client.get_messages(dialog_id, ids=message_id)
         file = message.file
-        print(file.mime_type)
+        # print(file.mime_type)
         if file is None:
-            print(f'No media in message [id: {message_id}]')
+            # print(f'No media in message [id: {message_id}]')
             return
 
         filename = f'files/{dialog_id}_{message_id}{file.ext}'  # TODO: make settings for download folder

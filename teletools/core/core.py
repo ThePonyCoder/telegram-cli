@@ -1,20 +1,19 @@
-import string
+import _curses
 import curses
 import curses.textpad
+import os
 import queue
+import string
 import threading
 import time
-import os
 
 from .chats import Chats
 from .messages import Messages
-from .writer import Writer
-from ..classes.colors import Colors
-from ..classes.modes import MODES
-from ..tools.database import Database
-from ..classes.update import Update, UpdateType
 from .statusline import Status
-import _curses
+from .writer import Writer
+from ..classes.modes import MODES
+from ..classes.update import Update, UpdateType
+from ..tools.database import Database
 
 # sizes of windows
 CHATS_WIDTH = 2
@@ -25,6 +24,10 @@ MESSAGES_HEIGHT = 6
 # margins between windows
 CHATS_MARGIN = 1
 WRITER_MARGIN = 3
+
+
+def print(*args, **kwargs):
+    pass
 
 
 class Core:
@@ -55,16 +58,17 @@ class Core:
 
     def continuous_updates(self):
         while True:
-            self.main_window.refresh()
+            # self.main_window.refresh()
 
             self.new_data_event.wait()
-            if time.time() - self.last_update_time <= 8:
+            if (time.time() - self.last_update_time) <= 8:
                 time.sleep(8 - (time.time() - self.last_update_time))
-                self.last_update_time = time.time()
+
             self.draw_chats(noupdate=True)
             self.draw_messages(noupdate=True)
             self.new_data_event.clear()
             print('new_event')
+            self.last_update_time = time.time()
 
     def init_windows(self):
         self.main_window = curses.initscr()
@@ -84,6 +88,16 @@ class Core:
         writer_window = self.main_window.subwin(height - messages_height - WRITER_MARGIN - 1, width - 1 - chats_width,
                                                 messages_height + WRITER_MARGIN, chats_width + 1)
         status_window = self.main_window.subwin(1, width, height - 1, 0)
+
+        self.main_window.idcok(True)
+        status_window.idcok(True)
+        writer_window.idcok(True)
+        messages_window.idcok(True)
+
+        self.main_window.idlok(True)
+        status_window.idlok(True)
+        writer_window.idlok(True)
+        messages_window.idlok(True)
 
         self.chats = Chats(chats_window)
         self.messages = Messages(messages_window)
@@ -334,7 +348,7 @@ class Core:
                 print('overflow')
                 s = wch
 
-            print(s)
+            # print(s)
 
             self.key_handler(s)
 

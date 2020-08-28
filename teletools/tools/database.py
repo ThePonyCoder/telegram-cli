@@ -399,7 +399,7 @@ if __name__ == '__main__':
         dialogs = await client.get_dialogs()
         for dia in dialogs:
             messages = await client.get_messages(dia.id, limit=30)
-            print(messages[3].to_id, dia.id)
+            # print(messages[3].to_id, dia.id)
 
 
     client.loop.run_until_complete(main())
