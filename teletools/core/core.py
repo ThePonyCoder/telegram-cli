@@ -44,6 +44,7 @@ class Core:
         # synchronisation between threads
         self.new_data_event = new_data_event
         self.update_queue = update_queue
+        self.last_update_time = 0
 
         # many actions at a time
         self.char_query = ''
@@ -57,6 +58,9 @@ class Core:
             self.main_window.refresh()
 
             self.new_data_event.wait()
+            if time.time() - self.last_update_time <= 8:
+                time.sleep(8 - (time.time() - self.last_update_time))
+                self.last_update_time = time.time()
             self.draw_chats(noupdate=True)
             self.draw_messages(noupdate=True)
             self.new_data_event.clear()

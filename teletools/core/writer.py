@@ -10,6 +10,7 @@ class Writer:
 
     def clear(self):
         self.draft = []
+        self.crs = [0, 0]
         self.redraw()
 
     def addch(self, char):
@@ -85,7 +86,10 @@ class Writer:
         self.redraw()
 
     def get_draft(self):
-        return '\n'.join(self.draft)
+        ans = ''
+        for i in self.draft:
+            ans += ''.join(i) + '\n'
+        return ans
 
     @property
     def _height(self):
