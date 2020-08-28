@@ -243,6 +243,15 @@ class Core:
         if s == '^[[C':
             self.writer.curs_right()
             return
+
+        if s == '^[[A':
+            self.writer.curs_up()
+            return
+
+        if s == '^[[B':
+            self.writer.curs_down()
+            return
+
         if s == '^?':
             self.writer.rm()
             return
