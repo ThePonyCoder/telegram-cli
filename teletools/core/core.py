@@ -244,6 +244,9 @@ class Core:
         return chats_width, messages_height
 
     def insert_key_handler(self, s):
+        if s == '^J':
+            s = '\n'
+
         if s == '^[':
             self._leave_insert_mode()
 
@@ -261,9 +264,8 @@ class Core:
 
         elif s == '^?':
             self.writer.rm()
+
         elif len(s) == 1:
-            if s == '^J':
-                s = '\n'
             self.writer.addch(s)
         self.refresh()
 
