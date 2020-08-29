@@ -11,7 +11,8 @@ from .database import Database
 from ..classes.update import UpdateType
 
 AUTODOWNLOAD_PHOTOS = False
-AUTOUPDATE_DIALOGS_TIMEOUT = 7
+AUTOUPDATE_DIALOGS_TIMEOUT = 20  # update dialogs every X seconds
+
 
 class TelegramApi:
     def __init__(self, api_id, api_hash, new_data_event: threading.Event, update_queue: queue.Queue):
@@ -140,24 +141,19 @@ class TelegramApi:
     async def _new_message_handler(self, event):
         # print('new_message')
         message = event.message
-        print(f'Notify: {message.silent}')
-
         dialog = await event.get_chat()
 
         message.from_username, message.from_name = await self.__get_message_name(message)
         self.database.update_messages(message, dialog.id)
 
         try:
-            self.database.update_dialogs(dialog)
-            print('getting result...')
-            result = await self.client(functions.account.GetNotifySettingsRequest(
-                peer=dialog.id
-            ))
-            print(f'peer: {result.mute_until.timestamp()}')
+            if message.out:
+                self.database.inc_unread_counter(dialog.id)
+            print('incremented')
         except Exception as e:
             print(e)
 
-        await self._update_dialogs()
+        # await self._update_dialogs()
         self.new_data_event.set()
 
     async def _edit_message_handler(self, event):
@@ -171,15 +167,16 @@ class TelegramApi:
         self.new_data_event.set()
 
     async def _read_message_handler(self, event):
-        # print('read_message')
         pass
         messages = await event.get_messages()
         dialog = await event.get_chat()
 
         for message in messages:
             message.from_username, message.from_name = await self.__get_message_name(message)
-
         self.database.update_messages(messages, dialog.id)
+        print(f'message read {dialog.id}')
+        for message in messages:
+            self.database.dec_unread_counter(dialog.id)
         self.new_data_event.set()
 
     async def _download_media(self, dialog_id, message_id, download_handler=print, auto_open=True):

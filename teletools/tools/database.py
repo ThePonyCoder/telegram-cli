@@ -27,38 +27,72 @@ class Database:
                 DELETE FROM dialogs
                 WHERE id = ?
             """, [dialog_obj.id])
-            cursor.execute("""
-                INSERT INTO dialogs(
-                    id, 
-                    pinned, 
-                    archived,
-                    date,
-                    name,
-                    is_user,
-                    is_group,
-                    is_channel,
-                    read_inbox_max_id,
-                    read_outbox_max_id,
-                    last_message_id,
-                    unread_count,
-                    muted_until
-                )
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-            """, [
-                dialog_obj.id,
-                dialog_obj.pinned,
-                dialog_obj.archived,
-                dialog_obj.date.timestamp(),
-                dialog_obj.name,
-                dialog_obj.is_user,
-                dialog_obj.is_group,
-                dialog_obj.is_channel,
-                dialog_obj.read_inbox_max_id,
-                dialog_obj.read_outbox_max_id,
-                dialog_obj.last_message_id,
-                dialog_obj.unread_count,
-                dialog_obj.muted_until
-            ])
+            try:
+                cursor.execute("""
+                    INSERT INTO dialogs(
+                        id, 
+                        pinned, 
+                        archived,
+                        date,
+                        name,
+                        is_user,
+                        is_group,
+                        is_channel,
+                        read_inbox_max_id,
+                        read_outbox_max_id,
+                        last_message_id,
+                        unread_count,
+                        muted_until
+                    )
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """, [
+                    dialog_obj.id,
+                    dialog_obj.pinned,
+                    dialog_obj.archived,
+                    dialog_obj.date.timestamp(),
+                    dialog_obj.name,
+                    dialog_obj.is_user,
+                    dialog_obj.is_group,
+                    dialog_obj.is_channel,
+                    dialog_obj.read_inbox_max_id,
+                    dialog_obj.read_outbox_max_id,
+                    dialog_obj.last_message_id,
+                    dialog_obj.unread_count,
+                    dialog_obj.muted_until
+                ])
+            except AttributeError:
+                import traceback
+                import sys
+                traceback.print_exc(file=sys.stdout)
+
+        conn.commit()
+        conn.close()
+
+    def inc_unread_counter(self, dialog_id):
+        conn, cursor = self.connect()
+        cursor.execute("""
+                UPDATE 
+                    dialogs
+                SET
+                    unread_count=unread_count+1
+                WHERE
+                    id=?
+            """, [dialog_id])
+
+        conn.commit()
+        conn.close()
+
+    def dec_unread_counter(self, dialog_id):
+        conn, cursor = self.connect()
+        cursor.execute("""
+                UPDATE 
+                    dialogs
+                SET
+                    unread_count=unread_count-1
+                WHERE
+                    id=?
+            """, [dialog_id])
+
         conn.commit()
         conn.close()
 

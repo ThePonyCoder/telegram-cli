@@ -58,6 +58,7 @@ class Core:
             # self.main_window.refresh()
 
             self.new_data_event.wait()
+            print('new_EVENT!!!')
             if (time.time() - self.last_update_time) <= 8:
                 time.sleep(8 - (time.time() - self.last_update_time))
 
