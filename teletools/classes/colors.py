@@ -59,7 +59,7 @@ class Colors:
     def _init_dialog_color(self):
         self.__add_color(self.dialog, 'selected', self._BLACK, self._CYAN)
         self.__add_color(self.dialog, 'default', self._BLUE, self._BLACK)
-        self.__add_color(self.dialog, 'alert', self._BLACK, self._YELLOW)
+        self.__add_color(self.dialog, 'alert', self._YELLOW, self._BLACK)
 
     def _init_status_color(self):
         self.__add_color(self.status, 'mode_dialogs', self._BLACK, self._GREEN)
