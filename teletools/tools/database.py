@@ -39,9 +39,11 @@ class Database:
                     is_channel,
                     read_inbox_max_id,
                     read_outbox_max_id,
-                    last_message_id
+                    last_message_id,
+                    unread_count,
+                    muted_until
                 )
-                VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, [
                 dialog_obj.id,
                 dialog_obj.pinned,
@@ -53,7 +55,9 @@ class Database:
                 dialog_obj.is_channel,
                 dialog_obj.read_inbox_max_id,
                 dialog_obj.read_outbox_max_id,
-                dialog_obj.last_message_id
+                dialog_obj.last_message_id,
+                dialog_obj.unread_count,
+                dialog_obj.muted_until
             ])
         conn.commit()
         conn.close()
@@ -384,7 +388,19 @@ class Database:
 
         dialogs_list = cursor.execute("""
             SELECT 
-                id, pinned, archived, date, name, is_user, is_group, is_channel
+                id, 
+                pinned, 
+                archived, 
+                date, 
+                name, 
+                is_user, 
+                is_group, 
+                is_channel,
+                read_inbox_max_id,
+                read_outbox_max_id,
+                last_message_id,
+                unread_count,
+                muted_until
             from 
                 dialogs
             WHERE
@@ -403,7 +419,12 @@ class Database:
                 'name': i[4],
                 'is_user': i[5],
                 'is_group': i[6],
-                'is_channel': i[7]
+                'is_channel': i[7],
+                'read_inbox_max_id': i[8],
+                'read_outbox_max_id': i[9],
+                'last_message_id': i[10],
+                'unread_count': i[11],
+                'muted_until': i[12]
             }
             dialogs.append(dialog)
         conn.commit()
@@ -480,7 +501,10 @@ class Database:
                 is_channel INTEGER,
                 read_inbox_max_id INTEGER,
                 read_outbox_max_id INTEGER,
-                last_message_id INTEGER         
+                last_message_id INTEGER,
+                unread_count INTEGER,
+                muted_until INTEGER
+                  
             );
         """)
 
