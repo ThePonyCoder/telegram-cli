@@ -11,7 +11,6 @@ class Messages:
         self.window = window  # curses.window
         self.colors = Colors()  # color palette
         self.message_list = None
-        self.active_msg = None
         self.drown_number = 0  # number of messages that are drown on the screen
         self._last_drown_id = None  # TODO: needs normal name. func too
 
@@ -28,7 +27,6 @@ class Messages:
         self.message_list = message_list
         if len(self.message_list) > 1:
             self._last_drown_id = self.message_list[0].get('id')
-        print(self._last_drown_id)
         self._draw_messages()
 
     @staticmethod

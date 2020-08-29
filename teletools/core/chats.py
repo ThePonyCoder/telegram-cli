@@ -29,7 +29,8 @@ class Chats:
                 {
                     name: "",
                     id: "",
-                    flags: "-u"
+                    flags: "-u",
+                    unread_count: ""
                 }
             ]
         :param chat_list:
@@ -113,8 +114,12 @@ class Chats:
             flags = '[' + chat['flags'] + ']'
             name = f' {number:>2}  {flags} {chat["name"]}'.ljust(self._width)[:self._width - 1] + ' '
             name = name[:self._width - 1]
+            name = name[:-len(chat['unread_count'])] + chat['unread_count']
             if chat['id'] == self._active_chat_id:
                 self._window.addstr(line, 0, name, curses.A_BOLD | self._colors.dialog.selected)
             else:
-                self._window.addstr(line, 0, name, curses.A_BOLD | self._colors.dialog.default)
+                if chat['muted_until'] < time.time() and int(chat['unread_count']) > 0:
+                    self._window.addstr(line, 0, name, curses.A_BOLD | self._colors.dialog.alert)
+                else:
+                    self._window.addstr(line, 0, name, curses.A_BOLD | self._colors.dialog.default)
         # self._window.refresh()

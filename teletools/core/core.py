@@ -1,6 +1,7 @@
 import _curses
 import curses
 import curses.textpad
+import math
 import os
 import queue
 import string
@@ -63,7 +64,6 @@ class Core:
             self.draw_chats(noupdate=True)
             self.draw_messages(noupdate=True)
             self.new_data_event.clear()
-            print('new_event')
             self.last_update_time = time.time()
             self.refresh()
 
@@ -123,15 +123,27 @@ class Core:
                 status += '-'
             return status
 
-        reduced_chat_list = [{
-            'name': i['name'],
-            'id': i['id'],
-            'flags': _get_chat_flags(i)
-        } for i in chat_list]
+        reduced_chat_list = []
+        for chat in chat_list:
+            unread_count = -1
+            try:
+                unread_count = chat['unread_count']
+            except Exception as e:
+                print("Can't calculate unread_count", e)
+
+            reduced_chat_list.append({
+                'name': chat['name'],
+                'id': chat['id'],
+                'flags': _get_chat_flags(chat),
+                'unread_count': str(unread_count),
+                'muted_until': chat['muted_until']
+            })
 
         reduced_chat_list.insert(0, {'name': 'Archived chats',
                                      'id': 0,
-                                     'flags': '-f'
+                                     'flags': '-f',
+                                     'unread_count': '0',
+                                     'muted_until': math.inf
                                      })  # This is archive folder!
         self.chats.set_chat_list(reduced_chat_list)
 
@@ -144,7 +156,7 @@ class Core:
             self.status.set_dialog_name('Archive')
             return
         if not noupdate:
-            self.update_messages(self.__get_active_id())
+            self.update_messages(id=self.__get_active_id())
         messages_list = self.database.get_messages(self.__get_active_id())
 
         def _get_flags(msg):

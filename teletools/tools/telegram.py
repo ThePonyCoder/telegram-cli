@@ -5,12 +5,13 @@ import time
 import os.path
 
 from telethon import TelegramClient, events
+from telethon import functions
 
 from .database import Database
 from ..classes.update import UpdateType
 
 AUTODOWNLOAD_PHOTOS = False
-
+AUTOUPDATE_DIALOGS_TIMEOUT = 7
 
 class TelegramApi:
     def __init__(self, api_id, api_hash, new_data_event: threading.Event, update_queue: queue.Queue):
@@ -36,6 +37,7 @@ class TelegramApi:
 
         # starting real time updates
         self.loop.create_task(self._run_until_disconnected())
+        self.loop.create_task(self.__autoupdate_dialogs())
 
         # starting updates_handler
         self.loop.create_task(self._updates_handler())
@@ -85,9 +87,21 @@ class TelegramApi:
             i.read_outbox_max_id = i.dialog.read_outbox_max_id
             i.last_message_id = i.message.id
 
+            i.muted_until = i.dialog.notify_settings.mute_until
+            if hasattr(i.muted_until, 'timestamp'):
+                i.muted_until = i.muted_until.timestamp()
+            else:
+                i.muted_until = 0
+
         self.database.update_dialogs(dialogs)
 
         self.new_data_event.set()
+
+    async def __autoupdate_dialogs(self):
+        while True:
+            print('updating dialogs...')
+            await self._update_dialogs()
+            await asyncio.sleep(AUTOUPDATE_DIALOGS_TIMEOUT)
 
     async def _update_messages(self, id, limit=10, min_id=None, max_id=None, ids=None):
         # TODO: settings for default limits
@@ -126,12 +140,24 @@ class TelegramApi:
     async def _new_message_handler(self, event):
         # print('new_message')
         message = event.message
+        print(f'Notify: {message.silent}')
 
         dialog = await event.get_chat()
 
         message.from_username, message.from_name = await self.__get_message_name(message)
         self.database.update_messages(message, dialog.id)
 
+        try:
+            self.database.update_dialogs(dialog)
+            print('getting result...')
+            result = await self.client(functions.account.GetNotifySettingsRequest(
+                peer=dialog.id
+            ))
+            print(f'peer: {result.mute_until.timestamp()}')
+        except Exception as e:
+            print(e)
+
+        await self._update_dialogs()
         self.new_data_event.set()
 
     async def _edit_message_handler(self, event):
