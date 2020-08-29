@@ -1,5 +1,6 @@
 # telegram-cli
 telegram-cli is a telegram command line interface written in python with curses.
+![Main image](./screenshots/main.png)
 
 ## Requirements
 - telethon python package
