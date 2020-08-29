@@ -126,6 +126,8 @@ class Core:
                 status += '-'
             return status
 
+        unread_unmuted_messages_count = 0
+        unread_muted_messages_count = 0
         reduced_chat_list = []
         for chat in chat_list:
             unread_count = -1
@@ -141,6 +143,12 @@ class Core:
                 'unread_count': str(unread_count),
                 'muted_until': chat['muted_until']
             })
+            if chat['muted_until'] <= time.time():
+                unread_unmuted_messages_count += int(unread_count)
+            else:
+                unread_muted_messages_count += int(unread_count)
+
+        self.status.set_newmessage_counter(unread_unmuted_messages_count)
 
         reduced_chat_list.insert(0, {'name': 'Archived chats',
                                      'id': 0,
