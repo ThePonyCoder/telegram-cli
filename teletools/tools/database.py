@@ -123,7 +123,48 @@ class Database:
             """, [dialog_id, message_obj.id])
 
             cursor.execute("""
-                INSERT INTO messages
+                INSERT INTO messages(
+                    id,
+                    dialog_id,
+                    out,
+                    mentioned,
+                    media_unread,
+                    silent,
+                    post,
+                    post_author,
+                    date,
+                    message,
+                    from_id,
+                    via_bot_id,
+                    views,
+                    edit_date,
+                    
+                    is_reply,
+                    reply_to_msg_id,
+                    
+                    forward,
+                    forward_from_id,
+                    forward_from_name,
+                    forward_channel_id,
+                    forward_channel_post,
+                    forward_post_author,
+                    
+                    media,
+                    photo,
+                    audio,
+                    voice,
+                    document,
+                    video,
+                    file,
+                    gif,
+                    invoice,
+                    poll,
+                    sticker,    
+
+                    to_id,  
+                    from_name,
+                    from_username
+                )
                 VALUES (
                     ?,?,?,?,?,
                     ?,?,?,?,?,
@@ -180,7 +221,49 @@ class Database:
         conn, cursor = self.connect()
         if max_id is None and min_id is None:
             cursor = cursor.execute("""
-                SELECT * from messages
+                SELECT
+                    id,
+                    dialog_id,
+                    out,
+                    mentioned,
+                    media_unread,
+                    silent,
+                    post,
+                    post_author,
+                    date,
+                    message,
+                    from_id,
+                    via_bot_id,
+                    views,
+                    edit_date,
+                    
+                    is_reply,
+                    reply_to_msg_id,
+                    
+                    forward,
+                    forward_from_id,
+                    forward_from_name,
+                    forward_channel_id,
+                    forward_channel_post,
+                    forward_post_author,
+                    
+                    media,
+                    photo,
+                    audio,
+                    voice,
+                    document,
+                    video,
+                    file,
+                    gif,
+                    invoice,
+                    poll,
+                    sticker,    
+
+                    to_id,  
+                    from_name,
+                    from_username                 
+                from 
+                    messages
                 WHERE 
                     dialog_id=?
                 ORDER BY 
@@ -193,7 +276,49 @@ class Database:
             if min_id is None:
                 min_id = 0
             cursor = cursor.execute("""
-                SELECT * from messages
+                SELECT 
+                    id,
+                    dialog_id,
+                    out,
+                    mentioned,
+                    media_unread,
+                    silent,
+                    post,
+                    post_author,
+                    date,
+                    message,
+                    from_id,
+                    via_bot_id,
+                    views,
+                    edit_date,
+                    
+                    is_reply,
+                    reply_to_msg_id,
+                    
+                    forward,
+                    forward_from_id,
+                    forward_from_name,
+                    forward_channel_id,
+                    forward_channel_post,
+                    forward_post_author,
+                    
+                    media,
+                    photo,
+                    audio,
+                    voice,
+                    document,
+                    video,
+                    file,
+                    gif,
+                    invoice,
+                    poll,
+                    sticker,    
+    
+                    to_id,  
+                    from_name,
+                    from_username 
+                from 
+                    messages
                 WHERE 
                     dialog_id=? AND
                     ? <= id AND
