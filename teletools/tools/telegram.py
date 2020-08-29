@@ -79,6 +79,12 @@ class TelegramApi:
 
     async def _update_dialogs(self):
         dialogs = await self.client.get_dialogs()
+
+        for i in dialogs:
+            i.read_inbox_max_id = i.dialog.read_inbox_max_id
+            i.read_outbox_max_id = i.dialog.read_outbox_max_id
+            i.last_message_id = i.message.id
+
         self.database.update_dialogs(dialogs)
 
         self.new_data_event.set()
