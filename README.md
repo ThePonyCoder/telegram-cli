@@ -8,7 +8,7 @@ telegram-cli is a telegram command line interface written in python with curses.
 ## Usage 
 First you should set your telegram `app api_id` and `app api_hash` in `auth.txt`. 
 
-You can get tham [here](https://my.telegram.org/apps)
+You can get them [here](https://my.telegram.org/apps)
 
 You should have something like this:
 
