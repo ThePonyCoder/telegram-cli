@@ -72,17 +72,6 @@ class Status:
         self._window.addstr(0, self._width - len(newmsgstr) - len(numberkitstr), numberkitstr)
         # self._window.refresh()
 
-    def set_colors(self, colors):
-        pass
-        """
-        colors example:
-            {
-                'active': curses.pair_content(ACTIVE_CHAT),
-                'inactive': curses.pair_content(INACTIVE_CHAT),
-                'alert': curses.pair_content(ALERT)
-            }
-        """
-        self._colors = colors
 
     def clear(self):
         self._window.clear()
@@ -95,7 +84,3 @@ class Status:
     @property
     def _width(self):
         return self._window.getmaxyx()[1]
-
-    def set_colors(self, colors):
-        pass
-        self._colors = colors
