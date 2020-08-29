@@ -58,10 +58,11 @@ class Core:
             # self.main_window.refresh()
 
             self.new_data_event.wait()
-            print('new_EVENT!!!')
-            if (time.time() - self.last_update_time) <= 8:
-                time.sleep(8 - (time.time() - self.last_update_time))
+            if (time.time() - self.last_update_time) <= 0.2:
+                print('sleeping timeout')
+                time.sleep(0.2 - (time.time() - self.last_update_time))
 
+            print('new_EVENT!!!')
             self.draw_chats(noupdate=True)
             self.draw_messages(noupdate=True)
             self.new_data_event.clear()
@@ -108,6 +109,7 @@ class Core:
     def draw_chats(self, noupdate=False):
         if not noupdate:
             self.update_dialogs()
+        # print('chats_redrawing')
         chat_list = self.database.get_dialogs()
 
         def _get_chat_flags(chat):
@@ -329,6 +331,9 @@ class Core:
         if s == 'o' and self.char_query != '':
             self.download_media(self.__get_active_id(), int(self.char_query))
 
+        if s == 'r':
+            self.mark_as_read(self.__get_active_id())
+
         if s == 'R' or s == '~Z':
             self.redraw()
 
@@ -402,4 +407,9 @@ class Core:
         event = Update(type=UpdateType.MEDIA_DOWNLOAD, dialog_id=dialog_id, message_id=message_id,
                        download_handler=self.status.set_download)
         self.update_queue.put_nowait(event)
-        print('added to queue')
+        print('added to queue downloadmedia event')
+
+    def mark_as_read(self, dialog_id):
+        event = Update(type=UpdateType.READ_MESSAGE, dialog_id=dialog_id)
+        self.update_queue.put_nowait(event)
+        print('added set as read')

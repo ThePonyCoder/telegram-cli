@@ -75,6 +75,12 @@ class TelegramApi:
                             text=update.message
                         )
                     )
+                if update.type == UpdateType.READ_MESSAGE:
+                    self.loop.create_task(
+                        self._read_message(
+                            dialog_id=update.dialog_id
+                        )
+                    )
 
             else:
                 await asyncio.sleep(5)
@@ -100,6 +106,7 @@ class TelegramApi:
 
     async def __autoupdate_dialogs(self):
         while True:
+            break
             print('updating dialogs...')
             await self._update_dialogs()
             await asyncio.sleep(AUTOUPDATE_DIALOGS_TIMEOUT)
@@ -147,9 +154,8 @@ class TelegramApi:
         self.database.update_messages(message, dialog.id)
 
         try:
-            if message.out:
+            if not message.out:
                 self.database.inc_unread_counter(dialog.id)
-            print('incremented')
         except Exception as e:
             print(e)
 
@@ -176,8 +182,10 @@ class TelegramApi:
         self.database.update_messages(messages, dialog.id)
         print(f'message read {dialog.id}')
         for message in messages:
-            self.database.dec_unread_counter(dialog.id)
+            # self.database.dec_unread_counter(dialog.id)
+            pass
         self.new_data_event.set()
+
 
     async def _download_media(self, dialog_id, message_id, download_handler=print, auto_open=True):
         message = await self.client.get_messages(dialog_id, ids=message_id)
@@ -204,3 +212,9 @@ class TelegramApi:
         print(message.from_name)
         self.database.update_messages(message, dialog_id)
         self.new_data_event.set()
+
+    async def _read_message(self, dialog_id):
+        await self.client.send_read_acknowledge(entity=dialog_id)
+        self.database.clear_unread_counter(dialog_id=dialog_id)
+        self.new_data_event.set()
+        print('read setted')

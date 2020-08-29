@@ -82,16 +82,22 @@ class Database:
         conn.commit()
         conn.close()
 
-    def dec_unread_counter(self, dialog_id):
+    def clear_unread_counter(self, dialog_id):
         conn, cursor = self.connect()
-        cursor.execute("""
-                UPDATE 
-                    dialogs
-                SET
-                    unread_count=unread_count-1
-                WHERE
-                    id=?
-            """, [dialog_id])
+        try:
+            cursor.execute("""
+                    UPDATE 
+                        dialogs
+                    SET
+                        unread_count=0
+                    WHERE
+                        id=?
+                """, [dialog_id])
+        except Exception:
+            import traceback, sys
+            traceback.print_tb(file=sys.stdout)
+        finally:
+            print('clear_done')
 
         conn.commit()
         conn.close()

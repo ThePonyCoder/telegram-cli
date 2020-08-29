@@ -15,3 +15,4 @@ class UpdateType(Enum):
     DIALOGUES_UPDATE = auto()
     MEDIA_DOWNLOAD = auto()
     SEND_MESSAGE = auto()
+    READ_MESSAGE = auto()
