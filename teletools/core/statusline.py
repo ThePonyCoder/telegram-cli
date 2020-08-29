@@ -55,8 +55,8 @@ class Status:
         self._window.clear()
         modestr = f' {self._mode_name} '
         dialogstr = f' {self._dialog_name} '
-        newmsgstr = f' [{self._new_messages_counter}] '
-        numberkitstr = f' {self._char_query} '
+        message_number_str = f' [{self._new_messages_counter}] '
+        query = f' {self._char_query} '
         downloadstr = f' dl: {self._download_percent}% '
 
         left_p = 0  # points to the first free char
@@ -67,11 +67,13 @@ class Status:
         if self._download_percent is not None:
             self._window.addstr(0, left_p, downloadstr, self._colors.status.download)
             left_p += len(downloadstr)
-
-        self._window.insstr(0, self._width - len(newmsgstr), newmsgstr)
-        self._window.addstr(0, self._width - len(newmsgstr) - len(numberkitstr), numberkitstr)
+        if self._new_messages_counter:
+            self._window.insstr(0, self._width - len(message_number_str),
+                                message_number_str, self._colors.status.counter_active | curses.A_BOLD)
+        else:
+            self._window.insstr(0, self._width - len(message_number_str), message_number_str)
+        self._window.addstr(0, self._width - len(message_number_str) - len(query), query)
         # self._window.refresh()
-
 
     def clear(self):
         self._window.clear()
