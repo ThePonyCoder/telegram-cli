@@ -28,8 +28,20 @@ class Database:
                 WHERE id = ?
             """, [dialog_obj.id])
             cursor.execute("""
-                INSERT INTO dialogs
-                VALUES (?,?,?,?,?,?,?,?)
+                INSERT INTO dialogs(
+                    id, 
+                    pinned, 
+                    archived,
+                    date,
+                    name,
+                    is_user,
+                    is_group,
+                    is_channel,
+                    read_inbox_max_id,
+                    read_outbox_max_id,
+                    last_message_id
+                )
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)
             """, [
                 dialog_obj.id,
                 dialog_obj.pinned,
@@ -39,25 +51,32 @@ class Database:
                 dialog_obj.is_user,
                 dialog_obj.is_group,
                 dialog_obj.is_channel,
+                dialog_obj.read_inbox_max_id,
+                dialog_obj.read_outbox_max_id,
+                dialog_obj.last_message_id
             ])
         conn.commit()
         conn.close()
 
     def update_dialog_time(self, messages_obj, dialog_id):
-        bst = 0
+        bst_time = 0
+        bst_id = 0
         for message in messages_obj:
             if message.date:
-                bst = max(bst, message.date.timestamp())
+                bst_time = max(bst_time, message.date.timestamp())
+            if message.id:
+                bst_id = max(bst_id, message.id)
         conn, cursor = self.connect()
-        time = cursor.execute("""
+        time, last_message_id = cursor.execute("""
             SELECT 
-                date 
+                date,
+                last_message_id
             FROM 
                 dialogs
             WHERE
                 id=?
-        """, [dialog_id]).fetchall()[0][0]
-        if time < bst:
+        """, [dialog_id]).fetchall()[0]
+        if time and time < bst_time:
             cursor.execute("""
                 UPDATE
                     dialogs
@@ -65,7 +84,16 @@ class Database:
                     date=?
                 WHERE
                     id=?
-            """, [bst, dialog_id])
+            """, [bst_time, dialog_id])
+        if last_message_id and last_message_id < bst_id:
+            cursor.execute("""
+                UPDATE
+                    dialogs
+                SET
+                    last_message_id=?
+                WHERE
+                    id=?
+            """, [bst_id, dialog_id])
         conn.commit()
         conn.close()
 
@@ -224,16 +252,16 @@ class Database:
         return messages
 
     def get_dialogs(self, archived=False):
-        if archived:
-            archived = 1
-        else:
-            archived = 0
+        archived = 1 if archived else 0
 
         conn, cursor = self.connect()
         # TODO execute by archived bool
 
         dialogs_list = cursor.execute("""
-            SELECT * from dialogs
+            SELECT 
+                id, pinned, archived, date, name, is_user, is_group, is_channel
+            from 
+                dialogs
             WHERE
                 archived=?
             ORDER BY 
@@ -324,7 +352,10 @@ class Database:
                 name TEXT,
                 is_user INTEGER,
                 is_group INTEGER,
-                is_channel INTEGER                
+                is_channel INTEGER,
+                read_inbox_max_id INTEGER,
+                read_outbox_max_id INTEGER,
+                last_message_id INTEGER         
             );
         """)
 
